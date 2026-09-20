@@ -19,7 +19,7 @@ export async function viewModels(root) {
 
   const tableBody = el('tbody');
   const cacheText = el('span.muted.mono');
-  const quotaText = el('span.faint');
+  const quotaText = el('div.faint');
 
   const importInput = el('input', {
     type: 'file', multiple: true, accept: '.pth,.index,.onnx,.zip', style: 'display: none',
@@ -79,7 +79,7 @@ export async function viewModels(root) {
   const baseSources = el('div.grid.cols-2', {}, (sources.length ? sources : []).map((s) =>
     el('div.card', { style: { padding: '12px 14px' } }, [
       el('strong', {}, [], s.name),
-      el("p.faint", { style: "margin: 2px 0 6px" }, [], s.desc || ""),
+      el("p.faint", {}, [], s.desc || ""),
       el('a', { href: s.url, target: '_blank', rel: 'noreferrer' }, [], s.url),
     ])));
 
@@ -90,7 +90,7 @@ export async function viewModels(root) {
 
   const body = el('div', {}, [tabs, table, el('div', { style: 'height:18px' }), importCard, el('div', { style: 'height:18px' }), baseSources]);
 
-  root.append(head, el('div', {}, [
+  root.append(head, el('div', { style: 'display:flex;flex-direction:column;gap:20px' }, [
     card(t('models.cache'), { right: [
       cacheText,
       btn(t('models.cache.clear'), { size: 'sm', variant: 'danger', onClick: clearCache }),

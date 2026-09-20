@@ -142,7 +142,7 @@ export async function viewSettings(root) {
   const cacheInfo = el('span.muted.mono', {}, [], '…');
 
   const dataCard = card(t('settings.data'), {}, [
-    el('p.muted', { style: 'margin:0 0 10px' }, [], t('settings.data.desc')),
+    el('p.muted', {}, [], t('settings.data.desc')),
     el('div.row', {}, [
       btn(t('settings.data.export'), {
         size: 'sm', onClick: () => {

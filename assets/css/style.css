@@ -291,7 +291,7 @@ h1.page-title {
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  margin: 2px 0 2px;
+  margin: 2px 0 6px;
   text-shadow: var(--t-shadow);
 }
 p.lead { margin: 0; color: var(--ink-dim); text-shadow: var(--t-shadow-sm); }
@@ -617,6 +617,23 @@ table.data td.mono, table.data th.mono { font-variant-numeric: tabular-nums; }
 .notice.err { border-color: rgba(248, 113, 113, 0.4); background: rgba(248, 113, 113, 0.10); }
 .notice strong { color: var(--ink); }
 
+/* ---------- 卡片内纵向节奏 ---------- */
+/* 1) 标题行（.row）与紧随的内容之间：12px。
+      不设这条时，卡片标题和下面第一块内容是 0 间距，肉眼看着贴边 */
+.card > .row + * { margin-top: 12px; }
+
+/* 2) 卡片内 加粗标题 与说明文字 */
+.card > strong + .faint,
+.card > strong + p { margin-top: 6px; }
+
+/* 3) 提示/表格/拖拽区 紧跟按钮时，避免「警告条 + 大按钮」贴在一起 */
+.card > .notice + .btn,
+.card > .notice + .row,
+.card > .table-wrap + .btn,
+.card > .dropzone + .btn,
+.card > .kbd-hints + .btn,
+.card > .empty-state + .btn { margin-top: 14px; }
+
 .progress { height: 5px; border-radius: 99px; background: rgba(255, 255, 255, 0.16); overflow: hidden; }
 .progress > span { display: block; height: 100%; width: 0%; border-radius: 99px; background: #ffffff; transition: width 0.2s ease; }
 .progress.indeterminate > span { width: 30%; animation: indet 1.1s ease-in-out infinite; }
@@ -729,7 +746,7 @@ table.data td.mono, table.data th.mono { font-variant-numeric: tabular-nums; }
 /* ---------------- 快捷键提示 ---------------- */
 .kbd-hints {
   display: flex; flex-wrap: wrap; gap: 12px;
-  margin: 12px 0 4px; padding-top: 12px;
+  margin: 12px 0; padding-top: 12px;
   border-top: 1px dashed var(--line);
   font-size: 11.5px; color: var(--ink-ghost);
 }
