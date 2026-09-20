@@ -1,0 +1,23 @@
+# 依赖与运行产物
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+
+# 本地模型权重（体积大且有版权风险，不要提交）
+models/weights/
+*.pth
+*.pt
+*.onnx
+*.index
+*.wav
+*.mp3
+*.flac
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

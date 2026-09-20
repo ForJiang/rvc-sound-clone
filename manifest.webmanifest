@@ -1,0 +1,14 @@
+{
+  "name": "RVC Sound Clone",
+  "short_name": "RVC Clone",
+  "description": "基于 RVC 的网页端声音克隆工具",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0f19",
+  "theme_color": "#0b0f19",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "assets/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

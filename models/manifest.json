@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "updated": "2026-09-20",
+  "note": "只登记基础模型与模型来源，不托管任何第三方人声音色。音色模型由用户在浏览器中导入。",
+  "base": [
+    {
+      "id": "hubert-base",
+      "name": "HuBERT base（内容特征提取）",
+      "kind": "base",
+      "engine": "onnx",
+      "license": "MIT / Apache-2.0（上游模型）",
+      "note": "RVC 推理流水线第一阶段，把波形转成 768 维内容特征",
+      "size": 115000000,
+      "files": [
+        {
+          "name": "hubert.onnx",
+          "url": "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt",
+          "size": 115000000,
+          "convert": "需先用 tools/export_onnx.py 转成 hubert.onnx（.pt 无法在浏览器中直接加载）"
+        }
+      ]
+    },
+    {
+      "id": "rmvpe",
+      "name": "RMVPE（音高提取）",
+      "kind": "base",
+      "engine": "onnx",
+      "license": "MIT（上游模型）",
+      "note": "比 harvest 更快更稳的 F0 提取器",
+      "size": 180000000,
+      "files": [
+        {
+          "name": "f0.onnx",
+          "url": "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt",
+          "size": 180000000,
+          "convert": "需先用 tools/export_onnx.py 转成 f0.onnx"
+        }
+      ]
+    }
+  ],
+  "voices": [],
+  "sources": [
+    {
+      "name": "Retrieval-based-Voice-Conversion-WebUI",
+      "desc": "RVC 官方实现，训练 .pth 模型、下载预处理模型的入口。",
+      "url": "https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI"
+    },
+    {
+      "name": "模型分享社区（Hugging Face）",
+      "desc": "搜索 rvc 可找到社区公开音色模型，请遵守各模型的授权说明。",
+      "url": "https://huggingface.co/models?search=rvc"
+    },
+    {
+      "name": "AI 音色模型站（ModelHub 类站点）",
+      "desc": "第三方公开模型站，导入前请确认授权与使用条款。",
+      "url": "https://huggingface.co/spaces?search=voice%20conversion"
+    }
+  ]
+}
