@@ -184,6 +184,9 @@ const DICT = {
     'toast.copyFail': '复制失败，请手动选择文本',
     'toast.saved': '已保存',
     'storage.degraded': '浏览器存储不可用（{reason}），本次会话的设置与模型不会保存，刷新后需重新导入。',
+    'update.available': '站点已更新到新版本',
+    'update.hint': '点击立即刷新加载新版；忽略则继续使用当前版本。',
+    'update.reload': '立即刷新',
     'toast.browserOld': '当前浏览器不支持部分音频特性，建议使用最新版 Chrome / Edge / Safari。',
   },
 
@@ -366,6 +369,9 @@ const DICT = {
     'toast.copyFail': 'Copy failed — please select the text manually',
     'toast.saved': 'Saved',
     'storage.degraded': 'Browser storage is unavailable ({reason}). Settings and models will not persist in this session.',
+    'update.available': 'A new version is available',
+    'update.hint': 'Click to reload with the new version, or keep using the current one.',
+    'update.reload': 'Reload now',
     'toast.browserOld': 'This browser lacks some audio features; use the latest Chrome / Edge / Safari.',
   },
 };

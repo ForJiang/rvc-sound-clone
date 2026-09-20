@@ -133,6 +133,7 @@ rvc-sound-clone/
 ├─ index.html              单页应用入口（hash 路由）
 ├─ 404.html
 ├─ manifest.webmanifest    PWA 元信息
+├─ assets/version.json     构建版本号（用于新版本提示）
 ├─ assets/
 │  ├─ css/style.css        深色玻璃设计系统、响应式布局
 │  ├─ logo.svg
@@ -163,6 +164,14 @@ rvc-sound-clone/
 - [ ] 拖拽式的多音色混音 / 多轨道试听
 - [ ] 离线完全可用：内置 ONNX Runtime 与 wasm，去掉 CDN 依赖
 - [ ] 自定义 UI 配色与布局密度
+
+## 🔄 更新与缓存
+
+站点是纯静态部署，浏览器会缓存 JS/CSS 模块。为了避免改了页面你却看不到：
+
+- 页面启动 4 秒后开始轮询 `assets/version.json`（之后每 5 分钟一次），发现服务端版本与当前构建不一致时，右下角会弹出「站点已更新到新版本」，点「立即刷新」即可加载新版；
+- 版本号对应仓库 commit：`assets/js/app.js` 里的 `BUILD` 常量与 `assets/version.json` 的 `version` 字段，发版时同步更新；
+- 机器人轮询失败（断网等）会静默跳过，不影响使用。
 
 ## ❓ FAQ
 
