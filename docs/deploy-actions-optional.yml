@@ -1,3 +1,13 @@
+# 可选：改用 GitHub Actions 部署 Pages（而不是默认的「分支部署」）
+#
+# 本仓库默认已开启 Pages 的「分支部署」：push 到 main 后由 GitHub 直接发布根目录，
+# 无需构建、无需 token 具备 workflow 权限。
+#
+# 如果你希望走 Actions（例如将来加入构建步骤），
+# 把本文件复制为 .github/workflows/deploy.yml 再提交即可。
+# 注意：含有 .github/workflows/ 的提交要求推送用的 token 具备 workflow 权限，
+# 普通 repo 权限的 OAuth token 会被 GitHub 拒绝该文件的写入。
+
 name: Deploy to GitHub Pages
 
 on:
@@ -23,7 +33,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 纯静态站点：没有构建步骤，直接把工作区拷成 artifact
       - name: Prepare site
         run: |
           mkdir -p site

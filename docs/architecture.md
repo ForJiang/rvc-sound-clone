@@ -60,7 +60,8 @@ RVC 的完整推理链（HuBERT 内容特征 + RMVPE 音高 + 检索索引 + HiF
 
 ## 部署
 
-纯静态。推送到 GitHub 后，`.github/workflows/deploy.yml` 会构建并发布到 GitHub Pages。没有构建步骤、没有依赖安装，workflow 只做「拷贝 + 发布」。
+纯静态。默认走 GitHub Pages 的「分支部署」：push 到 `main` 即发布仓库根目录，无需构建。
+自定义域名或想改用 Actions 部署时，参考 `docs/deploy-actions-optional.yml`。
 
 ## 已知取舍
 
