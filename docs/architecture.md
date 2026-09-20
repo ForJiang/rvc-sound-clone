@@ -58,6 +58,14 @@ RVC 的完整推理链（HuBERT 内容特征 + RMVPE 音高 + 检索索引 + HiF
 - IndexedDB `rvc-sound-clone/kv`：`{ k: 'settings', v: Settings }`
 - localStorage：语言、主题
 
+## 视觉系统
+
+跟随 [ForJiang.github.io](https://github.com/ForJiang/ForJiang.github.io) 的设计语言：深色单一主题，
+`assets/js/liquid-bg.js` 用自研 WebGL fragment shader 画液态金属背景（metaballs + fbm 扰动），
+同一文件内实现白色鼠标流光；内容统一压在 `bg-black/40 + border-white/15 + backdrop-blur` 的
+玻璃面板上保证可读性。背景渲染带画质自适应档位（2560×1440 起步，p95 帧时间超标才降档），
+`prefers-reduced-motion` 下静态成一帧，WebGL 不可用时回落到 CSS 渐变。
+
 ## 部署
 
 纯静态。默认走 GitHub Pages 的「分支部署」：push 到 `main` 即发布仓库根目录，无需构建。
