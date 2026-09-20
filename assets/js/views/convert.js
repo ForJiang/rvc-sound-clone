@@ -34,17 +34,47 @@ export async function viewConvert(root) {
 
   const timeEl = el('span.rec-time', {}, [], '0:00');
   const meterCanvas = el('canvas', { height: 18, style: 'width:100%;height:18px;display:block' });
-  const recBtn = btn(t('convert.rec.start'), {
-    variant: 'primary', attrs: { class: 'rec-btn', 'aria-label': t('convert.rec.start') },
-    onClick: () => (recorder.recording ? stopRecording() : startRecording()),
-  });
+  /* 录音按钮：圆形图标按钮（文字单独放标签，避免文字超出圆形） */
+  const recBtn = el('button.rec-btn', {
+    type: 'button', title: t('convert.rec.start'),
+    onclick: () => (recorder.recording ? stopRecording() : startRecording()),
+  }, [micIcon()]);
+
+  const recLabel = el('span.rec-label', {}, [], t('convert.rec.start'));
   const recTimer = el('span.faint', {}, [], t('convert.rec.hint'));
 
   const recorderBox = el('div.recorder', {}, [
     recBtn,
-    el('div.meter', {}, [el('div.meter-track', {}, [el('div.meter-fill', { id: 'meterFill' })]), meterCanvas]),
-    timeEl,
+    el('div.meter', {}, [
+      el('div.rec-head', {}, [recLabel, timeEl]),
+      el('div.meter-track', {}, [el('div.meter-fill', { id: 'meterFill' })]),
+      meterCanvas,
+    ]),
   ]);
+
+  function micIcon() {
+    return el('svg', { viewBox: '0 0 24 24', width: 20, height: 20, 'aria-hidden': 'true' }, [
+      el('path', { fill: 'currentColor', d: 'M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-4 4.9V21h-2v-4.1A5 5 0 0 1 7 12h2a3 3 0 0 0 6 0h2Z' }),
+    ]);
+  }
+
+  function stopIcon() {
+    return el('svg', { viewBox: '0 0 24 24', width: 18, height: 18, 'aria-hidden': 'true' }, [
+      el('rect', { x: 6, y: 6, width: 12, height: 12, rx: 2, fill: 'currentColor' }),
+    ]);
+  }
+
+  /** 同步录音按钮的图标、无障碍标签与状态文字。 */
+  function syncRecBtn() {
+    const recording = recorder.recording;
+    recBtn.replaceChildren(recording ? stopIcon() : micIcon());
+    recBtn.classList.toggle('recording', recording);
+    recBtn.title = recording ? t('convert.rec.stop') : t('convert.rec.start');
+    recBtn.setAttribute('aria-label', recBtn.title);
+    recBtn.setAttribute('aria-pressed', String(recording));
+    recLabel.textContent = recording ? t('convert.rec.doing') : t('convert.rec.start');
+    recTimer.textContent = recording ? t('convert.rec.recording') : t('convert.rec.hint');
+  }
 
   const fileInput = el('input', {
     type: 'file', accept: ACCEPT, multiple: true, style: 'display:none',
@@ -129,8 +159,7 @@ export async function viewConvert(root) {
         onLevel: (v) => { const f = $('#meterFill'); if (f) f.style.width = `${Math.round(v * 100)}%`; },
         onTick: (ms) => { timeEl.textContent = fmtTime(ms / 1000); },
       });
-      recBtn.classList.add('recording');
-      recBtn.textContent = t('convert.rec.stop');
+      syncRecBtn();
     } catch (err) {
       const msg = err.name === 'NotAllowedError' ? t('convert.rec.denied')
         : err.name === 'NotFoundError' ? t('convert.rec.noDevice')
@@ -142,14 +171,12 @@ export async function viewConvert(root) {
   async function stopRecording() {
     try {
       const { blob } = await recorder.stop();
-      recBtn.classList.remove('recording');
-      recBtn.textContent = t('convert.rec.start');
+      syncRecBtn();
       timeEl.textContent = '0:00';
       const meter = $('#meterFill'); if (meter) meter.style.width = '0%';
       await addFiles([new File([blob], `recording-${Date.now()}.webm`, { type: blob.type })]);
     } catch (err) {
-      recBtn.classList.remove('recording');
-      recBtn.textContent = t('convert.rec.start');
+      syncRecBtn();
       toast(err.message, { type: 'err' });
     }
   }
@@ -515,7 +542,7 @@ export async function viewConvert(root) {
     renderTabPanels();
     syncQueueCount();
     refreshModelHint();
-    recBtn.textContent = recorder.recording ? t('convert.rec.stop') : t('convert.rec.start');
+    syncRecBtn();
   }
 
   /* 快捷键：R 录音、C 转换、空格播放结果、Backspace 清空队列（输入框内不拦截） */
@@ -532,7 +559,7 @@ export async function viewConvert(root) {
   const stopRefresh = onLangChange(() => {
     renderTabs();
     renderTabPanels();
-    recBtn.textContent = recorder.recording ? t('convert.rec.stop') : t('convert.rec.start');
+    syncRecBtn();
     syncQueueCount();
     dlBtn.textContent = t('convert.result.download');
     dlZipBtn.textContent = t('convert.result.downloadAll');
@@ -559,6 +586,7 @@ export async function viewConvert(root) {
   renderQueue();
   refreshModelHint();
   syncPresetActive();
+  syncRecBtn();
   if (state.ui.modelId) modelSelect.value = state.ui.modelId;
 
   return {
