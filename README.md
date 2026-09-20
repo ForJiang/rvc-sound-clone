@@ -2,7 +2,7 @@
 
 > 借助 RVC（Retrieval-based Voice Conversion）实现的**网页端声音克隆 / 变声工具** —— 纯静态部署，录音、上传、推理、导出全在浏览器里完成，音频不上传。也可切换到本地服务引擎，连接本机官方 RVC 服务获得 GPU 级音质与速度。
 
-[![Deploy to GitHub Pages](https://github.com/ForJiang/rvc-sound-clone/actions/workflows/deploy.yml/badge.svg)](https://github.com/ForJiang/rvc-sound-clone/actions/workflows/deploy.yml)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-在线-3ddc97.svg)](https://forjiang.github.io/rvc-sound-clone/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6d8cff.svg)](LICENSE)
 [![No Build](https://img.shields.io/badge/build-none-success.svg)](index.html)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-a86dff.svg)](https://github.com/ForJiang/rvc-sound-clone/pulls)
@@ -146,7 +146,7 @@ rvc-sound-clone/
 ├─ tools/export_onnx.py    .pth → ONNX 转换脚本
 ├─ server/bridge.py        本地服务桥接层（纯标准库）
 ├─ docs/                   用法、模型转换、FAQ、架构
-└─ .github/workflows/      Pages 自动部署
+└─ docs/                    用法、模型转换、FAQ、架构、部署
 ```
 
 ## 🗺️ 路线图
