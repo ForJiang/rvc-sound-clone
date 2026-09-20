@@ -113,22 +113,18 @@ export async function viewSettings(root) {
     ]),
   ]);
 
-  /* ---------------- 外观 ---------------- */
-  const themeBtns = el('div.row.tight', {}, [themeBtn('dark'), themeBtn('light')]);
+  /* ---------------- 外观：跟随参考站，仅深色主题，这里只切语言 ---------------- */
   const langBtns = el('div.row.tight', {}, [langBtn('zh'), langBtn('en')]);
 
   const appearanceCard = card(t('settings.appearance'), {}, [
     el('div.grid.cols-2', {}, [
-      el('div', {}, [el('div.field-label', {}, [], t('settings.appearance.theme')), themeBtns]),
+      el('div', {}, [el('div.field-label', {}, [], t('settings.appearance.theme')), themeNote()]),
       el('div', {}, [el('div.field-label', {}, [], t('settings.appearance.lang')), langBtns]),
     ]),
   ]);
 
-  function themeBtn(id) {
-    return btn(id === 'dark' ? t('settings.appearance.theme.dark') : t('settings.appearance.theme.light'), {
-      size: 'sm', attrs: { 'aria-pressed': String((document.documentElement.dataset.theme || 'dark') === id) },
-      onClick: () => applyTheme(id, renderAppearance),
-    });
+  function themeNote() {
+    return el('div.faint', { style: 'margin-top:6px' }, [], t('settings.appearance.theme.fixed'));
   }
 
   function langBtn(id) {
@@ -139,7 +135,6 @@ export async function viewSettings(root) {
   }
 
   function renderAppearance() {
-    themeBtns.replaceChildren(themeBtn('dark'), themeBtn('light'));
     langBtns.replaceChildren(langBtn('zh'), langBtn('en'));
   }
 
@@ -213,19 +208,4 @@ function formatBytesSafe(bytes) {
   const units = ['B', 'KB', 'MB', 'GB'];
   const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
   return `${(bytes / 1024 ** i).toFixed(i ? 1 : 0)} ${units[i]}`;
-}
-
-export function applyTheme(theme, onChange) {
-  document.documentElement.dataset.theme = theme;
-  try { localStorage.setItem('rvc.theme', theme); } catch { /* ignore */ }
-  onChange?.();
-}
-
-export function initTheme() {
-  let theme = 'dark';
-  try {
-    theme = localStorage.getItem('rvc.theme')
-      || (window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-  } catch { /* ignore */ }
-  document.documentElement.dataset.theme = theme;
 }

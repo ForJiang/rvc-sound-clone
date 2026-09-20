@@ -210,9 +210,9 @@ export async function copyText(text) {
 /* --------------------------- 波形绘制 --------------------------- */
 
 /**
- * 把 [-1,1] 的 PCM 画成波形。peaks 预降采样，避免大文件重绘卡顿。
+ * 把 [-1,1] 的 PCM 画成波形。未播放部分用半透明白，播放过的是纯白。
  */
-export function drawWave(canvas, samples, { progress = 0, color, wave = 'rgba(109,140,255,.85)' } = {}) {
+export function drawWave(canvas, samples, { progress = 0, color, wave = 'rgba(255,255,255,.92)' } = {}) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const w = canvas.clientWidth || 600;
   const h = canvas.clientHeight || 96;
@@ -242,7 +242,7 @@ export function drawWave(canvas, samples, { progress = 0, color, wave = 'rgba(10
     const bh = Math.max(1.5, peak * (h - 6));
     const x = i * (barW + gap);
     const played = x / w <= progress;
-    ctx.fillStyle = color || (played ? wave : 'rgba(151,161,184,.32)');
+    ctx.fillStyle = color || (played ? wave : 'rgba(255,255,255,.30)');
     ctx.fillRect(x, mid - bh / 2, barW, bh);
   }
 }
@@ -265,10 +265,10 @@ export function drawMeter(canvas, analyser) {
     const idx = Math.floor((i / bars) ** 1.4 * buf.length);
     const v = buf[idx] / 255;
     const bh = Math.max(2, v * h);
+    // 电平条：银色系，与整体单色视觉一致
     const grad = ctx.createLinearGradient(0, h, 0, h - bh);
-    grad.addColorStop(0, '#3ddc97');
-    grad.addColorStop(0.7, '#ffb457');
-    grad.addColorStop(1, '#ff5f6d');
+    grad.addColorStop(0, 'rgba(255,255,255,.45)');
+    grad.addColorStop(1, 'rgba(255,255,255,1)');
     ctx.fillStyle = grad;
     ctx.fillRect(i * bw + 1, h - bh, bw - 2, bh);
   }

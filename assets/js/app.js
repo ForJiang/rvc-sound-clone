@@ -1,12 +1,12 @@
 /**
- * 应用入口：启动引导、hash 路由、主题与语言、顶栏状态灯。
+ * 应用入口：启动引导、hash 路由、背景特效与语言、顶栏状态灯。
  */
 
 import { initI18n, t, onLangChange, setLang, getLang, applyI18n } from './i18n.js';
 import { $, $$, toast } from './ui.js';
 import { initState, state, refreshEngineChip } from './state.js';
 import { storageStatus } from './store.js';
-import { initTheme } from './views/settings.js';
+import { startLiquidBackground, startMouseTrail } from './liquid-bg.js';
 import { viewConvert } from './views/convert.js';
 import { viewModels } from './views/models.js';
 import { viewSettings } from './views/settings.js';
@@ -58,7 +58,6 @@ async function renderRoute() {
 
 function wireTopbar() {
   const langBtn = document.getElementById('langBtn');
-  const themeBtn = document.getElementById('themeBtn');
 
   const syncLangBtn = () => { if (langBtn) langBtn.textContent = getLang() === 'zh' ? 'EN' : '中'; };
   syncLangBtn();
@@ -69,12 +68,6 @@ function wireTopbar() {
     applyI18n(document);
     refreshEngineChip();   // 用当前语言重绘状态灯
     renderRoute();
-  });
-
-  themeBtn?.addEventListener('click', () => {
-    const cur = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
-    document.documentElement.dataset.theme = cur;
-    try { localStorage.setItem('rvc.theme', cur); } catch { /* ignore */ }
   });
 
   document.getElementById('engineChip')?.addEventListener('click', () => {
@@ -92,7 +85,10 @@ function routeTitle(key) {
 /* ----------------------------- 启动 ----------------------------- */
 
 async function boot() {
-  initTheme();
+  // 液态金属背景 + 鼠标流光：失败/不支持时静默保留 CSS 渐变兜底
+  startLiquidBackground(document.getElementById('liquidBg'));
+  startMouseTrail(document.getElementById('mouseTrail'));
+
   initI18n();
   applyI18n(document);
 

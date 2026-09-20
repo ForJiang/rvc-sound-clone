@@ -21,7 +21,8 @@ English intro at the bottom → [English](#-english)
 | 🎚️ **完整参数** | 变调、索引强度、清音保护、音量包络混合、中值滤波半径，全部可调节 |
 | ⚡ **快捷操作** | 参数预设一键套用、队列原声试听、键盘快捷键（R 录音 / C 转换 / 空格播放） |
 | 📦 **自带模型库** | 基础模型一键下载，自定义 `.onnx` / `.pth` + `.index` 拖拽导入 |
-| 🌗 **中英双语 + 深浅主题** | 跟随系统语言与配色，移动端自适应 |
+| 🎨 **液态金属视觉** | 深色玻璃面板 + WebGL 液态金属背景 + 鼠标流光，视觉语言对齐 [ForJiang.github.io](https://github.com/ForJiang/ForJiang.github.io) |
+| 🌐 **中英双语** | 跟随系统语言，可手动切换，移动端自适应 |
 | 🔒 **隐私优先** | 音频与模型只存在你自己的 IndexedDB，没有任何服务端副本 |
 | 🚀 **真正静态** | 无构建、无依赖安装，GitHub Pages 直接发布 |
 
@@ -29,8 +30,10 @@ English intro at the bottom → [English](#-english)
 
 ![转换页](docs/screenshot-convert.png)
 
-转换页按「准备音频 → 选择音色与参数 → 播放导出」三步排布，右侧结果区可试听、下载 WAV 或打包 ZIP。
+转换页按「准备原始音频 → 选择音色与参数 → 播放导出」三步排布，右侧结果区可试听、下载 WAV 或打包 ZIP；
 四个快速预设（男→女 / 女→男 / 同性别微调 / 自然保真）一键套用常用参数组合，队列支持原声试听。
+
+> 视觉语言参考 [ForJiang.github.io](https://github.com/ForJiang/ForJiang.github.io)：深色单一主题、液态金属 shader 背景、`bg-black/40` 半透明玻璃面板、`rounded-3xl` 圆角、白色主 CTA。背景用自研 WebGL fragment shader 实现（无第三方依赖），并按帧时间自适应画质；`prefers-reduced-motion` 下自动静止。
 
 ## 🧩 它是怎么工作的
 
@@ -131,7 +134,7 @@ rvc-sound-clone/
 ├─ 404.html
 ├─ manifest.webmanifest    PWA 元信息
 ├─ assets/
-│  ├─ css/style.css        深浅双主题、响应式布局
+│  ├─ css/style.css        深色玻璃设计系统、响应式布局
 │  ├─ logo.svg
 │  └─ js/
 │     ├─ app.js            启动引导 + 路由 + 顶栏
@@ -141,6 +144,7 @@ rvc-sound-clone/
 │     ├─ audio.js          录音、解码、重采样、WAV 编解码、播放器
 │     ├─ store.js          IndexedDB（模型 Blob + 设置）
 │     ├─ catalog.js        模型索引
+│     ├─ liquid-bg.js     WebGL 液态金属背景 + 鼠标流光
 │     ├─ engine-onnx.js    浏览器推理流水线
 │     ├─ engine-server.js  本地服务客户端
 │     └─ views/            convert / models / settings / help
