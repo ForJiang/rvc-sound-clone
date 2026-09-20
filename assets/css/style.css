@@ -35,8 +35,10 @@
   /* 阴影：文字阴影压在液态金属高光上，卡片阴影制造悬浮感 */
   --t-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
   --t-shadow-sm: 0 1px 8px rgba(0, 0, 0, 0.45);
-  --card-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
-  --card-shadow-hi: 0 18px 50px rgba(0, 0, 0, 0.55);
+  /* 投影外扩 ≈ blur/2 + offset，必须小于卡片间距(16px)才不会相互粘连 */
+  --card-shadow: 0 6px 16px rgba(0, 0, 0, 0.38);
+  --card-shadow-hi: 0 10px 24px rgba(0, 0, 0, 0.5);
+  --shadow-toast: 0 4px 12px rgba(0, 0, 0, 0.45);
 
   --font: "Inter", "SF Pro SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
@@ -196,7 +198,7 @@ a:hover { text-decoration: underline; }
 .shell {
   display: grid;
   grid-template-columns: 208px minmax(0, 1fr);
-  gap: 20px;
+  gap: 22px;
   max-width: 1440px;
   margin: 0 auto;
   padding: calc(var(--topbar-h) + 22px) 24px 64px;
@@ -235,7 +237,7 @@ a:hover { text-decoration: underline; }
 }
 .sidebar-foot { margin-top: 8px; padding: 8px 12px 2px; border-top: 1px solid var(--line-soft); }
 
-.view { min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.view { min-width: 0; display: flex; flex-direction: column; gap: 20px; }
 
 /* 入场动画：opacity + y:30 上浮，delayChildren 0.2 / staggerChildren 0.15 */
 .view > * { animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
@@ -246,6 +248,8 @@ a:hover { text-decoration: underline; }
 @keyframes rise { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
 
 /* ---------------- 卡片：rounded-3xl 玻璃 ---------------- */
+/* 卡片投影刻意收敛：外扩 ≈ blur/2 + offset = 14px，小于 18px 的卡片间距，
+   相邻卡片的阴影不会互相粘连（液态金属背景上尤其明显） */
 .card {
   position: relative;
   background: var(--glass);
@@ -254,7 +258,7 @@ a:hover { text-decoration: underline; }
   padding: 22px;
   backdrop-filter: blur(4px);
   box-shadow: var(--card-shadow);
-  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .card:hover { border-color: var(--line-strong); box-shadow: var(--card-shadow-hi); }
 
@@ -292,7 +296,7 @@ h1.page-title {
 }
 p.lead { margin: 0; color: var(--ink-dim); text-shadow: var(--t-shadow-sm); }
 
-.grid { display: grid; gap: 16px; }
+.grid { display: grid; gap: 18px; }
 .grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid.convert { grid-template-columns: minmax(0, 1fr) 252px minmax(0, 1fr); align-items: start; }
@@ -638,7 +642,7 @@ table.data td.mono, table.data th.mono { font-variant-numeric: tabular-nums; }
   background: rgba(0, 0, 0, 0.62);
   border: 1px solid var(--line);
   backdrop-filter: blur(8px);
-  box-shadow: var(--card-shadow);
+  box-shadow: var(--shadow-toast);
   font-size: 12.5px;
   animation: toast-in 0.22s ease;
 }
@@ -748,7 +752,7 @@ table.data td.mono, table.data th.mono { font-variant-numeric: tabular-nums; }
 .row-click:hover { background: rgba(255,255,255,0.06); }
 
 /* ---------------- 帮助页步骤条 ---------------- */
-.steps-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 6px 0 8px; }
+.steps-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 6px 0 8px; }
 .step-card {
   padding: 14px;
   border-radius: var(--r-2xl);

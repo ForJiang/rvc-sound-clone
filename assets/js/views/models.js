@@ -83,7 +83,12 @@ export async function viewModels(root) {
       el('a', { href: s.url, target: '_blank', rel: 'noreferrer' }, [], s.url),
     ])));
 
-  const body = el('div', {}, [tabs, table, el('div', { style: 'height:14px' }), dropzone, el('div', { style: 'height:14px' }), baseSources]);
+  const importCard = card(t('models.import.title'), {}, [
+    notice(t('models.import.hint'), { type: 'info', icon: '📦' }),
+    el('div', { style: 'margin-top:12px' }, [dropzone]),
+  ]);
+
+  const body = el('div', {}, [tabs, table, el('div', { style: 'height:18px' }), importCard, el('div', { style: 'height:18px' }), baseSources]);
 
   root.append(head, el('div', {}, [
     card(t('models.cache'), { right: [
