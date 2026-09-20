@@ -118,7 +118,7 @@ export function base64ToBytes(b64) {
 }
 
 export async function decodePcm(bytes) {
-  const { getContext } = await import('./audio.js');
-  const ctx = getContext();
-  return ctx.decodeAudioData(bytes.buffer.slice(0));
+  // 复用 audio.js 的解码器：WAV 走纯 JS 解析，不依赖浏览器解码能力
+  const { decode } = await import('./audio.js');
+  return decode(bytes.buffer.slice(0));
 }

@@ -131,10 +131,120 @@ export class Recorder {
 }
 
 /** 解码任意浏览器支持的音频为 AudioBuffer。 */
+/** 判断字节流是否是 WAV（RIFF/WAVE 头）。 */
+export function isWav(bytes) {
+  if (bytes.length < 12) return false;
+  const tag = (o) => String.fromCharCode(bytes[o], bytes[o + 1], bytes[o + 2], bytes[o + 3]);
+  return tag(0) === 'RIFF' && tag(8) === 'WAVE';
+}
+
+/**
+ * 纯 JS 解析 PCM/float WAV，支持 8/16/24/32 位整型与 32 位浮点。
+ * 这样即使环境的 Web Audio 解码能力不全（部分内嵌浏览器、隐私模式），WAV 依然可用。
+ * @returns {{sampleRate:number, channels:Float32Array[]}}
+ */
+export function parseWav(bytes) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const tag = (o) => String.fromCharCode(bytes[o], bytes[o + 1], bytes[o + 2], bytes[o + 3]);
+
+  let pos = 12;
+  let format = 1;          // 1 = PCM，3 = IEEE float，0xFFFE = 可扩展
+  let channels = 1;
+  let sampleRate = 16000;
+  let bits = 16;
+  let dataStart = -1;
+  let dataLen = 0;
+
+  while (pos + 8 <= bytes.length) {
+    const id = tag(pos);
+    const size = view.getUint32(pos + 4, true);
+    const body = pos + 8;
+    if (id === 'fmt ') {
+      format = view.getUint16(body, true);
+      channels = view.getUint16(body + 2, true) || 1;
+      sampleRate = view.getUint32(body + 4, true) || 16000;
+      bits = view.getUint16(body + 14, true) || 16;
+    } else if (id === 'data') {
+      dataStart = body;
+      dataLen = size;
+      break;   // data 一般是最后一个 chunk
+    }
+    pos = body + size + (size % 2);   // chunk 按 2 字节对齐
+  }
+  if (dataStart < 0) throw new Error('WAV 中找不到 data 块');
+
+  const bytesPerSample = bits >> 3;
+  const frames = Math.floor(Math.min(dataLen, bytes.length - dataStart) / bytesPerSample / channels);
+  if (frames <= 0) throw new Error('WAV 数据长度为 0');
+
+  const out = [];
+  for (let c = 0; c < channels; c++) out.push(new Float32Array(frames));
+
+  let off = dataStart;
+  for (let i = 0; i < frames; i++) {
+    for (let c = 0; c < channels; c++) {
+      let v = 0;
+      if (format === 3 && bits === 32) v = view.getFloat32(off, true);
+      else if (bits === 16) v = view.getInt16(off, true) / 0x8000;
+      else if (bits === 24) {
+        const b0 = view.getUint8(off), b1 = view.getUint8(off + 1), b2 = view.getUint8(off + 2);
+        let x = (b2 << 16) | (b1 << 8) | b0;
+        if (x & 0x800000) x -= 0x1000000;
+        v = x / 0x800000;
+      } else if (bits === 32) v = view.getInt32(off, true) / 0x80000000;
+      else if (bits === 8) v = (view.getUint8(off) - 128) / 128;
+      out[c][i] = Math.max(-1, Math.min(1, v));
+      off += bytesPerSample;
+    }
+  }
+  return { sampleRate, channels: out };
+}
+
+/**
+ * 解码任意浏览器支持的音频。
+ * 优先走内置 WAV 解析（不依赖 AudioContext.decodeAudioData），
+ * 其余格式交给浏览器的解码器。
+ */
 export async function decode(arrayBuffer) {
+  const bytes = new Uint8Array(arrayBuffer);
+  if (isWav(bytes)) {
+    const { sampleRate, channels } = parseWav(bytes);
+    return toAudioBuffer(sampleRate, channels);
+  }
   const ctx = getContext();
+  if (typeof ctx.decodeAudioData !== 'function') {
+    throw new Error('当前环境不支持解码该格式（缺少 decodeAudioData），请改用 WAV 文件');
+  }
   const buf = await ctx.decodeAudioData(arrayBuffer.slice(0));
   return buf;
+}
+
+/**
+ * 把裸声道数据包成 AudioBuffer；AudioContext 不可用时退化为同形态对象，
+ * 仍可用于波形显示与 WAV 导出（仅播放不可用）。
+ */
+export function toAudioBuffer(sampleRate, channels) {
+  const ctx = isAudioSupported() ? getContext() : null;
+  if (ctx && typeof ctx.createBuffer === 'function') {
+    const buf = ctx.createBuffer(channels.length, channels[0].length, sampleRate);
+    if (buf && typeof buf.copyToChannel === 'function') {
+      channels.forEach((ch, c) => buf.copyToChannel(ch, c));
+      return buf;
+    }
+  }
+  return plainBuffer(sampleRate, channels);
+}
+
+/** 与 AudioBuffer 同形态的纯数据对象：可显示波形、可导出，仅不能播放。 */
+function plainBuffer(sampleRate, channels) {
+  const length = channels[0].length;
+  return {
+    sampleRate,
+    numberOfChannels: channels.length,
+    length,
+    duration: length / sampleRate,
+    getChannelData: (c) => channels[c],
+  };
 }
 
 /** AudioBuffer → 16bit PCM WAV Blob。 */
@@ -188,6 +298,7 @@ export function toMono(audioBuffer) {
 /** 用 OfflineAudioContext 重采样到目标采样率。 */
 export async function resample(audioBuffer, targetRate) {
   if (!targetRate || audioBuffer.sampleRate === targetRate) return audioBuffer;
+  if (typeof OfflineAudioContext !== 'function') return audioBuffer;   // 环境受限，保持原采样率
   const frames = Math.max(1, Math.round(audioBuffer.duration * targetRate));
   const off = new (ctxClass())({ numberOfChannels: 1, length: frames, sampleRate: targetRate });
   const src = off.createBufferSource();
@@ -222,6 +333,10 @@ export class Player {
 
   play(offsetSec = 0) {
     if (!this.buffer || this.playing) return;
+    if (typeof this.ctx.createBufferSource !== 'function') {
+      this.onEnded?.();
+      throw new Error('当前环境不支持音频播放，结果仍可下载');
+    }
     this.ctx.resume?.();
     this.source = this.ctx.createBufferSource();
     this.source.buffer = this.buffer;

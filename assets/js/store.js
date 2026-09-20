@@ -9,10 +9,33 @@ const STORE_MODELS = 'models';
 const STORE_KV = 'kv';
 
 let dbPromise = null;
+const OPEN_TIMEOUT_MS = 6000;
+
+/* 降级存储：IndexedDB 被禁用、被其他标签页阻塞或打开超时时使用。
+   功能可用（设置、模型），但刷新后丢失。 */
+const memory = {
+  models: new Map(),          // id -> record
+  kv: new Map(),              // k -> v
+  warned: false,
+};
+
+export function isDegraded() {
+  return dbPromise === null;
+}
+
+/** 供启动时探测：存储是否可用、不可用时的原因。 */
+export async function storageStatus() {
+  try {
+    await openDB();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
 
 function openDB() {
   if (dbPromise) return dbPromise;
-  dbPromise = new Promise((resolve, reject) => {
+  const raw = new Promise((resolve, reject) => {
     if (!('indexedDB' in window)) {
       reject(new Error('IndexedDB unavailable'));
       return;
@@ -30,6 +53,15 @@ function openDB() {
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
   });
+  // 打开被阻塞（例如别的标签页正在删同名库）时不能无限等待
+  const guarded = Promise.race([
+    raw,
+    new Promise((_, reject) => setTimeout(
+      () => reject(new Error('IndexedDB open timeout')), OPEN_TIMEOUT_MS,
+    )),
+  ]);
+  guarded.catch(() => { dbPromise = null; });   // 失败后允许下次重试
+  dbPromise = guarded;
   return dbPromise;
 }
 
@@ -47,9 +79,13 @@ function done(req) {
 /* ----------------------------- 模型 ----------------------------- */
 
 export async function listModels() {
-  const db = await openDB();
-  const all = await done(tx(db, STORE_MODELS, 'readonly').getAll());
-  return all.map(stripBlobs);
+  try {
+    const db = await openDB();
+    const all = await done(tx(db, STORE_MODELS, 'readonly').getAll());
+    return all.map(stripBlobs);
+  } catch {
+    return [...memory.models.values()].map(stripBlobs);
+  }
 }
 
 /** 返回不含 Blob 的元数据（Blob 体积大，列表页不要读进内存）。 */
@@ -60,31 +96,46 @@ function stripBlobs(m) {
 }
 
 export async function getModel(id) {
-  const db = await openDB();
-  const rec = await done(tx(db, STORE_MODELS, 'readonly').get(id));
-  return rec || null;
+  try {
+    const db = await openDB();
+    const rec = await done(tx(db, STORE_MODELS, 'readonly').get(id));
+    return rec || null;
+  } catch {
+    return memory.models.get(id) || null;
+  }
 }
 
 export async function putModel(record) {
-  const db = await openDB();
-  await done(tx(db, STORE_MODELS, 'readwrite').put(record));
+  try {
+    const db = await openDB();
+    await done(tx(db, STORE_MODELS, 'readwrite').put(record));
+  } catch {
+    memory.models.set(record.id, record);
+  }
   return record.id;
 }
 
 export async function deleteModel(id) {
-  const db = await openDB();
-  await done(tx(db, STORE_MODELS, 'readwrite').delete(id));
+  try {
+    const db = await openDB();
+    await done(tx(db, STORE_MODELS, 'readwrite').delete(id));
+  } catch {
+    memory.models.delete(id);
+  }
 }
 
 export async function clearModels() {
-  const db = await openDB();
-  await done(tx(db, STORE_MODELS, 'readwrite').clear());
+  try {
+    const db = await openDB();
+    await done(tx(db, STORE_MODELS, 'readwrite').clear());
+  } catch {
+    memory.models.clear();
+  }
 }
 
 /** 估算所有模型占用的字节数。 */
 export async function modelCacheBytes() {
-  const db = await openDB();
-  const all = await done(tx(db, STORE_MODELS, 'readonly').getAll());
+  const all = await listModels();
   return all.reduce((sum, m) => sum + Object.values(m.files || {}).reduce((s, b) => s + (b.size || 0), 0), 0);
 }
 
@@ -117,23 +168,39 @@ const DEFAULT_SETTINGS = {
 };
 
 export async function getSettings() {
-  const db = await openDB();
-  const row = await done(tx(db, STORE_KV, 'readonly').get('settings'));
-  return { ...DEFAULT_SETTINGS, ...(row?.v || {}), params: { ...DEFAULT_SETTINGS.params, ...(row?.v?.params || {}) } };
+  try {
+    const db = await openDB();
+    const row = await done(tx(db, STORE_KV, 'readonly').get('settings'));
+    return mergeSettings(row?.v);
+  } catch {
+    return mergeSettings(memory.kv.get('settings'));
+  }
 }
 
 export async function saveSettings(patch) {
   const cur = await getSettings();
   const next = { ...cur, ...patch, params: { ...cur.params, ...(patch.params || {}) } };
-  const db = await openDB();
-  await done(tx(db, STORE_KV, 'readwrite').put({ k: 'settings', v: next }));
+  try {
+    const db = await openDB();
+    await done(tx(db, STORE_KV, 'readwrite').put({ k: 'settings', v: next }));
+  } catch {
+    memory.kv.set('settings', next);
+  }
   return next;
 }
 
 export async function resetSettings() {
-  const db = await openDB();
-  await done(tx(db, STORE_KV, 'readwrite').put({ k: 'settings', v: DEFAULT_SETTINGS }));
+  try {
+    const db = await openDB();
+    await done(tx(db, STORE_KV, 'readwrite').put({ k: 'settings', v: DEFAULT_SETTINGS }));
+  } catch {
+    memory.kv.set('settings', DEFAULT_SETTINGS);
+  }
   return DEFAULT_SETTINGS;
+}
+
+function mergeSettings(saved) {
+  return { ...DEFAULT_SETTINGS, ...(saved || {}), params: { ...DEFAULT_SETTINGS.params, ...(saved?.params || {}) } };
 }
 
 export { DEFAULT_SETTINGS };

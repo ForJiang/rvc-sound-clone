@@ -111,6 +111,7 @@ export async function viewHelp(root) {
     body.replaceChildren(
       el('h1.page-title', {}, [], t('help.title')),
       el('p.lead', {}, [], t('brand.tag')),
+      stepsStrip(d),
       el('div.anchor-list', {}, d.toc.map((title, i) =>
         el('a', { href: '#' + slug(i, title) }, [], title))),
 
@@ -126,6 +127,20 @@ export async function viewHelp(root) {
       ]),
       footer(),
     );
+  }
+
+  function stepsStrip(d) {
+    const items = [
+      { num: '01', key: 0, desc: d.flow[0] },
+      { num: '02', key: 1, desc: d.flow[1] },
+      { num: '03', key: 2, desc: d.flow[2] },
+      { num: '04', key: 3, desc: d.flow[3] },
+    ];
+    return el('div.steps-strip', {}, items.map((it) => el('div.step-card', {}, [
+      el('div.sc-num', {}, [], it.num),
+      el('div.sc-title', {}, [], d.toc[it.key]),
+      el('div.sc-desc', {}, [], it.desc),
+    ])));
   }
 
   function quickSection(d, id) {

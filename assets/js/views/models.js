@@ -111,6 +111,10 @@ export async function viewModels(root) {
       el('td', {}, [
         el('div', { style: 'font-weight:550' }, [], m.name),
         m.note ? el('div.faint', {}, [], m.note) : null,
+        m.source === 'import' && m.files?.length
+          ? el('div.file-detail', {}, m.files.map((f) =>
+              el('span.chip' + (f.size ? '.ok' : ''), {}, [], `${f.name}${f.size ? ' · ' + formatBytes(f.size) : ''}`)))
+          : null,
       ]),
       el('td', {}, [el('span.badge' + (m.kind === 'base' ? '.brand' : ''), {}, [], m.kind === 'base' ? 'base' : 'voice')]),
       el('td.mono', {}, [], m.size ? formatBytes(m.size) : '—'),

@@ -3,8 +3,9 @@
  */
 
 import { initI18n, t, onLangChange, setLang, getLang, applyI18n } from './i18n.js';
-import { $, $$ } from './ui.js';
+import { $, $$, toast } from './ui.js';
 import { initState, state, refreshEngineChip } from './state.js';
+import { storageStatus } from './store.js';
 import { initTheme } from './views/settings.js';
 import { viewConvert } from './views/convert.js';
 import { viewModels } from './views/models.js';
@@ -30,7 +31,11 @@ async function renderRoute() {
   const key = parseRoute();
   const view = ROUTES[key];
   const root = $('#view');
-  currentCleanup?.();
+  try {
+    currentCleanup?.();
+  } catch (err) {
+    console.error('[cleanup]', err);   // 清理失败不能阻断路由切换
+  }
   currentCleanup = null;
   root.replaceChildren();
   $$('.sidebar a').forEach((a) => a.classList.toggle('active', a.dataset.route === key.slice(1)));
@@ -105,6 +110,11 @@ async function boot() {
   await renderRoute();
   if (bootBar) bootBar.style.width = '100%';
   document.getElementById('boot')?.classList.add('hidden');
+
+  // 存储可用性：不可用时明确告知，而不是让用户以为模型已保存
+  storageStatus().then((st) => {
+    if (!st.ok) toast(t('storage.degraded', { reason: st.error }), { type: 'warn', duration: 9000 });
+  });
 
   if (!navigator.mediaDevices?.getUserMedia) {
     $('#toasts')?.append(

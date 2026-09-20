@@ -4,7 +4,7 @@
 
 import { t, onLangChange } from '../i18n.js';
 import {
-  el, card, btn, slider, notice, toast, downloadBlob,
+  $, el, card, btn, slider, notice, toast, downloadBlob,
   makeZip, drawWave, formatTime, formatBytes, formatTime as fmtTime,
 } from '../ui.js';
 import {
@@ -24,7 +24,7 @@ export async function viewConvert(root) {
   const compatible = entries.filter((m) => m.downloaded && isCompatible(m, state.settings.engine));
 
   /* ---------------- 状态 ---------------- */
-  const activeTab = state.ui.activeTab || 'record';
+  let activeTab = state.ui.activeTab || 'record';
   let currentResult = null;
 
   /* ---------------- 左栏：输入 ---------------- */
@@ -79,7 +79,7 @@ export async function viewConvert(root) {
     tabs,
     tabPanels,
     el('div.row', { style: 'margin-top:12px;justify-content:space-between' }, [
-      el('span.faint', {}, [], `${t('convert.files')} · ${state.ui.queue.length}`),
+      el('span.faint', { id: 'queueCount' }, [], `${t('convert.files')} · ${state.ui.queue.length}`),
       btn(t('convert.files.clear'), { size: 'sm', variant: 'ghost', onClick: clearQueue }),
     ]),
     queueList,
@@ -89,8 +89,24 @@ export async function viewConvert(root) {
     return btn(t(key), {
       size: 'sm',
       attrs: { 'aria-pressed': String(activeTab === id) },
-      onClick: () => { state.ui.activeTab = id; refresh(); },
+      onClick: () => setTab(id),
     });
+  }
+
+  function setTab(id) {
+    if (state.ui.activeTab === id && activeTab === id) { renderTabs(); return; }
+    activeTab = id;
+    state.ui.activeTab = id;
+    renderTabs();
+    renderTabPanels();
+  }
+
+  function renderTabs() {
+    tabs.replaceChildren(
+      tabBtn('convert.tab.record', 'record'),
+      tabBtn('convert.tab.upload', 'upload'),
+      tabBtn('convert.tab.sample', 'sample'),
+    );
   }
 
   function renderTabPanels() {
@@ -166,25 +182,72 @@ export async function viewConvert(root) {
     refresh();
   }
 
+  function syncQueueCount() {
+    const node = $('#queueCount');
+    if (node) node.textContent = `${t('convert.files')} · ${state.ui.queue.length}`;
+    queueBadge.textContent = t('convert.stats.queue', { n: state.ui.queue.length });
+  }
+
   function renderQueue() {
+    syncQueueCount();
     if (!state.ui.queue.length) {
-      queueList.replaceChildren(el('p.faint', { style: 'margin:0' }, [], t('convert.files.empty')));
+      queueList.replaceChildren(el('div.empty-state', {}, [
+        el('span.es-icon', {}, [], '🎧'),
+        el('strong', {}, [], t('convert.files.empty')),
+        el('span', {}, [], t('convert.drop.hint')),
+      ]));
       return;
     }
-    queueList.replaceChildren(...state.ui.queue.map((item) => el('div.file-item', {}, [
-      el('span.fi-name', { title: item.name }, [], item.name),
-      el('span.fi-meta', {}, [], formatBytes(item.blob.size)),
-      el('span.fi-dur', {}, [], fmtTime(item.duration)),
-      btn('✕', {
-        size: 'sm', variant: 'ghost', title: t('convert.files.remove'),
-        onClick: () => {
-          state.ui.queue = state.ui.queue.filter((q) => q.id !== item.id);
-          if (state.ui.selectedQueueId === item.id) state.ui.selectedQueueId = state.ui.queue[0]?.id || null;
-          renderQueue();
-          refresh();
-        },
-      }),
-    ])));
+    queueList.replaceChildren(...state.ui.queue.map((item) => {
+      const selected = state.ui.selectedQueueId === item.id;
+      return el('div.file-item' + (selected ? '.selected' : ''), {}, [
+        el('button.fi-play', {
+          type: 'button', title: previewPlayer?.playing ? t('convert.preview.stop') : t('convert.preview'),
+          onclick: (e) => { e.stopPropagation(); togglePreview(item); },
+        }, [], previewId === item.id && previewPlayer?.playing ? '■' : '▶'),
+        el('button.fi-body', {
+          type: 'button', title: item.name,
+          onclick: () => {
+            state.ui.selectedQueueId = item.id;
+            renderQueue();
+          },
+        }, [
+          el('span.fi-name', {}, [], item.name),
+          el('span.fi-meta', {}, [], `${formatBytes(item.blob.size)} · ${item.channels > 1 ? item.channels + 'ch' : 'mono'}`),
+        ]),
+        el('span.fi-dur', {}, [], fmtTime(item.duration)),
+        selected ? el('span.badge.brand', {}, [], t('convert.selected')) : null,
+        btn('✕', {
+          size: 'sm', variant: 'ghost', title: t('convert.files.remove'),
+          onClick: () => {
+            state.ui.queue = state.ui.queue.filter((q) => q.id !== item.id);
+            if (state.ui.selectedQueueId === item.id) state.ui.selectedQueueId = state.ui.queue[0]?.id || null;
+            if (previewId === item.id) { previewPlayer?.stop(); previewId = null; }
+            renderQueue();
+            refresh();
+          },
+        }),
+      ]);
+    }));
+  }
+
+  /* 原声试听：与结果播放器分开，避免互相打断。
+     player 惰性创建——waveCanvas 在本函数之后才声明。 */
+  let previewPlayer = null;
+  let previewId = null;
+
+  function togglePreview(item) {
+    if (previewId === item.id && previewPlayer?.playing) {
+      previewPlayer.stop();
+      previewId = null;
+    } else {
+      previewPlayer?.stop();
+      previewPlayer ??= new Player({ canvas: waveCanvas, onEnded: () => renderQueue() });
+      previewPlayer.load(item.audioBuffer);
+      previewPlayer.play(0);
+      previewId = item.id;
+    }
+    renderQueue();
   }
 
   function clearQueue() {
@@ -201,6 +264,14 @@ export async function viewConvert(root) {
   }, compatible.length ? compatible.map((m) => el('option', { value: m.id, selected: state.ui.modelId === m.id }, [], m.name)) : [el('option', { value: '' }, [], t('convert.model.empty'))]);
 
   const params = state.settings.params;
+
+  const PRESETS = [
+    { id: 'm2f', key: 'convert.preset.m2f', values: { f0upKey: 12, indexRate: 0.75, protect: 0.33, rmsMixRate: 0.25, filterRadius: 3 } },
+    { id: 'f2m', key: 'convert.preset.f2m', values: { f0upKey: -12, indexRate: 0.75, protect: 0.33, rmsMixRate: 0.25, filterRadius: 3 } },
+    { id: 'same', key: 'convert.preset.same', values: { f0upKey: 0, indexRate: 0.6, protect: 0.3, rmsMixRate: 0.3, filterRadius: 3 } },
+    { id: 'natural', key: 'convert.preset.natural', values: { f0upKey: 0, indexRate: 0.5, protect: 0.45, rmsMixRate: 0.4, filterRadius: 5 } },
+  ];
+
   const pitch = slider({ label: t('convert.param.pitch'), hint: t('convert.param.pitchHint'), min: -24, max: 24, step: 1, value: params.f0upKey, onChange: persistParam('f0upKey') });
   const indexRate = slider({ label: t('convert.param.index'), hint: t('convert.param.indexHint'), min: 0, max: 1, step: 0.05, value: params.indexRate, onChange: persistParam('indexRate') });
   const protect = slider({ label: t('convert.param.protect'), hint: t('convert.param.protectHint'), min: 0, max: 0.5, step: 0.01, value: params.protect, onChange: persistParam('protect') });
@@ -225,20 +296,78 @@ export async function viewConvert(root) {
   });
   const runStatus = el('div.faint', { style: 'min-height:20px;margin-top:8px' }, [], '');
 
+  const kbdHints = el('div.kbd-hints', {}, [
+    el('span', {}, [el('kbd', {}, [], 'R'), ' ' + t('convert.kbd.record')]),
+    el('span', {}, [el('kbd', {}, [], 'C'), ' ' + t('convert.kbd.convert')]),
+    el('span', {}, [el('kbd', {}, [], 'Space'), ' ' + t('convert.kbd.play')]),
+  ]);
+
+  const modelWarn = el('div', { id: 'modelWarn', style: 'margin:6px 0 14px' });
+
   const paramCard = card(t('convert.step2'), { step: 2 }, [
     el('label.field', {}, [el('span.field-label', {}, [], t('convert.model')), modelSelect]),
-    el('div.faint', { id: 'modelHint', style: 'margin:6px 0 14px' }, [], ''),
+    modelWarn,
+    el('div', { style: 'margin-bottom:14px' }, [
+      el('div.field-label', {}, [], t('convert.presets')),
+      el('div.presets', { id: 'presetRow' }, PRESETS.map((p) => el('button.preset', {
+        type: 'button', dataset: { preset: p.id }, onClick: () => applyPreset(p),
+      }, [], t(p.key)))),
+    ]),
     el('div.grid', { style: 'gap:14px' }, [pitch, indexRate, protect, rmsMix, filterRadius]),
+    kbdHints,
     notice(t('convert.engine.warn'), { type: 'warn', icon: '⚠' }),
     runBtn,
     runStatus,
   ]);
 
+  /** 预设写入参数、同步滑块 DOM，并立即保存。 */
+  function applyPreset(preset) {
+    const p = state.settings.params;
+    state.settings.params = { ...p, ...preset.values };
+    const inputs = paramCard.querySelectorAll('input[type=range]');
+    const values = [preset.values.f0upKey, preset.values.indexRate, preset.values.protect, preset.values.rmsMixRate, preset.values.filterRadius];
+    inputs.forEach((input, i) => {
+      if (values[i] === undefined) return;
+      input.value = String(values[i]);
+      const valEl = input.closest('.slider-row')?.querySelector('.val');
+      if (valEl) valEl.textContent = formatParam(input, Number(values[i]));
+    });
+    state.saveSettings({ params: state.settings.params });
+    toast(t('toast.saved'), { type: 'ok', duration: 1600 });
+    syncPresetActive();
+  }
+
+  function formatParam(input, v) {
+    const step = Number(input.step || 1);
+    return step >= 1 ? String(v) : v.toFixed(2);
+  }
+
+  function isPresetActive(preset) {
+    const p = state.settings.params;
+    return Object.entries(preset.values).every(([k, v]) => p[k] === v);
+  }
+
+  function syncPresetActive() {
+    const p = state.settings.params;
+    paramCard.querySelectorAll('.preset').forEach((node) => {
+      const preset = PRESETS.find((x) => x.id === node.dataset.preset);
+      const active = preset && Object.entries(preset.values).every(([k, v]) => p[k] === v);
+      node.classList.toggle('active', !!active);
+    });
+  }
+
   function refreshModelHint() {
-    const hint = $('#modelHint');
-    if (!hint) return;
+    const warn = $('#modelWarn');
+    if (!warn) return;
     const m = entries.find((e) => e.id === state.ui.modelId);
-    hint.textContent = m ? `${m.kind === 'base' ? '基础模型' : '音色'} · ${m.license}` : t('convert.model.empty');
+    if (m) {
+      warn.replaceChildren(el('div.faint', { style: 'margin:0' }, [],
+        `${m.kind === 'base' ? 'Base' : 'Voice'} · ${m.license} · ${formatBytes(m.size || 0)}`));
+      return;
+    }
+    warn.replaceChildren(compatible.length
+      ? el('div.faint', { style: 'margin:0' }, [], '')
+      : notice(t('convert.noModelForEngine'), { type: 'warn', icon: '⚠' }));
   }
 
   /* ---------------- 右栏：结果 ---------------- */
@@ -382,29 +511,40 @@ export async function viewConvert(root) {
   }
 
   function refresh() {
-    tabs.replaceChildren(
-      tabBtn('convert.tab.record', 'record'),
-      tabBtn('convert.tab.upload', 'upload'),
-      tabBtn('convert.tab.sample', 'sample'),
-    );
+    renderTabs();
     renderTabPanels();
-    queueBadge.textContent = t('convert.stats.queue', { n: state.ui.queue.length });
+    syncQueueCount();
     refreshModelHint();
     recBtn.textContent = recorder.recording ? t('convert.rec.stop') : t('convert.rec.start');
   }
 
+  /* 快捷键：R 录音、C 转换、空格播放结果、Backspace 清空队列（输入框内不拦截） */
+  const onKey = (e) => {
+    const tag = (e.target?.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'select' || tag === 'textarea' || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'r' || e.key === 'R') { e.preventDefault(); recorder.recording ? stopRecording() : startRecording(); }
+    else if (e.key === 'c' || e.key === 'C') { e.preventDefault(); runConversion(); }
+    else if (e.code === 'Space' && currentResult) { e.preventDefault(); player.toggle(); updatePlayBtn(player.playing); }
+    else if (e.key === 'Backspace' && state.ui.queue.length) { e.preventDefault(); clearQueue(); }
+  };
+  window.addEventListener('keydown', onKey);
+
   const stopRefresh = onLangChange(() => {
-    tabs.replaceChildren(
-      tabBtn('convert.tab.record', 'record'),
-      tabBtn('convert.tab.upload', 'upload'),
-      tabBtn('convert.tab.sample', 'sample'),
-    );
+    renderTabs();
     renderTabPanels();
     recBtn.textContent = recorder.recording ? t('convert.rec.stop') : t('convert.rec.start');
+    syncQueueCount();
     dlBtn.textContent = t('convert.result.download');
     dlZipBtn.textContent = t('convert.result.downloadAll');
     runBtn.textContent = t('convert.start');
     refreshModelHint();
+    syncPresetActive();
+    const presetRow = $('#presetRow');
+    if (presetRow) {
+      presetRow.replaceChildren(...PRESETS.map((p) => el('button.preset' + (isPresetActive(p) ? '.active' : ''), {
+        type: 'button', dataset: { preset: p.id }, onClick: () => applyPreset(p),
+      }, [], t(p.key))));
+    }
     if (!currentResult) waveBox.append(el('div.wave-empty', {}, [], t('convert.result.empty')));
   });
 
@@ -418,13 +558,16 @@ export async function viewConvert(root) {
 
   renderQueue();
   refreshModelHint();
+  syncPresetActive();
   if (state.ui.modelId) modelSelect.value = state.ui.modelId;
 
   return {
     destroy() {
       clearTimeout(saveTimer);
       stopRefresh();
+      window.removeEventListener('keydown', onKey);
       player.stop();
+      previewPlayer?.stop();
       recorder.cleanup();
     },
   };
