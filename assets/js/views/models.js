@@ -3,7 +3,7 @@
  */
 
 import { t, onLangChange } from '../i18n.js';
-import { el, card, btn, toast, formatBytes, confirmDialog } from '../ui.js';
+import { el, card, btn, notice, toast, formatBytes, confirmDialog } from '../ui.js';
 import { catalog } from '../catalog.js';
 import { getModel, putModel, deleteModel, clearModels, modelCacheBytes, storageEstimate } from '../store.js';
 import { state, refreshEngineChip } from '../state.js';
@@ -34,7 +34,7 @@ export async function viewModels(root) {
   }, [
     el('div.dz-icon', {}, [], '📦'),
     el('strong', {}, [], t('models.import.title')),
-    el('small', {}, [], t('models.import.hint')),
+    el('small', {}, [], t('models.import.formats')),
   ]);
 
   const head = el('header', {}, [
@@ -106,16 +106,25 @@ export async function viewModels(root) {
     return entries.filter((e) => e.source === 'import');
   }
 
+  const EMPTY_MSG = {
+    voice: 'models.empty.voice',
+    custom: 'models.empty.imported',
+    base: 'models.empty.imported',
+  };
+
   function renderTable() {
     const rows = visibleEntries();
     if (!rows.length) {
-      tableBody.replaceChildren(el('tr', {}, [el('td', { colspan: 5, style: 'text-align:center;color:var(--text-faint);padding:22px' }, [], t('convert.files.empty'))]));
+      tableBody.replaceChildren(el('tr', {}, [el('td', {
+        colspan: 5, style: 'text-align:center;color:var(--text-faint);padding:22px;line-height:1.7;max-width:640px;margin:0 auto',
+      }, [], t(EMPTY_MSG[tab] || 'models.empty.imported'))]));
       return;
     }
     tableBody.replaceChildren(...rows.map((m) => el('tr', {}, [
       el('td', {}, [
         el('div', { style: 'font-weight:550' }, [], m.name),
         m.note ? el('div.faint', {}, [], m.note) : null,
+        m.kind === 'base' && !m.downloaded ? el('div.faint', { style: 'color:var(--warn);margin-top:2px' }, [], t('models.base.whyConvert')) : null,
         m.source === 'import' && m.files?.length
           ? el('div.file-detail', {}, m.files.map((f) =>
               el('span.chip' + (f.size ? '.ok' : ''), {}, [], `${f.name}${f.size ? ' · ' + formatBytes(f.size) : ''}`)))
@@ -132,10 +141,18 @@ export async function viewModels(root) {
     const dl = downloading.get(m.id);
     if (dl) return el('span.badge.warn', {}, [], `${t('models.status.downloading')} ${Math.round((dl.loaded / dl.total) * 100) || 0}%`);
     if (m.downloaded) return el('span.badge.ok', {}, [], t('models.status.ready'));
+    if (m.kind === 'base') return el('span.badge.warn', { title: t('models.base.whyConvert') }, [], t('models.base.needConvert'));
     return el('span.badge', {}, [], t('models.status.none'));
   }
 
   function actionBtns(m) {
+    // 基础模型是 .pt，浏览器引擎用不了，给转换指引而不是误导性的下载
+    if (m.kind === 'base' && !m.downloaded) {
+      return el('a.btn.sm', {
+        href: 'https://github.com/ForJiang/rvc-sound-clone/blob/main/docs/model-conversion.md',
+        target: '_blank', rel: 'noreferrer', title: t('models.base.whyConvert'),
+      }, [], t('models.action.convertGuide'));
+    }
     const dl = downloading.get(m.id);
     if (dl) {
       return el('div.row.tight', {}, [
