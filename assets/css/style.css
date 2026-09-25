@@ -582,6 +582,8 @@ input[type="range"]::-moz-range-thumb { width: 13px; height: 13px; border-radius
 
 /* ---------------- 表格 ---------------- */
 .table-wrap { overflow-x: auto; border-radius: var(--r-2xl); border: 1px solid var(--line); }
+/* 标签行与表格之间留出距离，避免视觉上粘连成一块 */
+.row.tight + .table-wrap { margin-top: 12px; }
 table.data { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 table.data th {
   text-align: left; padding: 10px 14px; white-space: nowrap;
