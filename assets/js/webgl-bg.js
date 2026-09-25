@@ -118,12 +118,22 @@ export function startShaderBackground(canvas) {
   let raf = 0;
   let stopped = false;
   let startTime = performance.now();
-  /* 滚动期间暂停渲染：移动端 GPU 一边合成滚动、一边画全屏 shader 就会抢资源导致
+  let lastNow = startTime;
+  /* 滚动期间暂停渲染：触屏设备 GPU 一边合成滚动、一边画全屏 shader 就会抢资源导致
      卡顿；暂停时不清屏，画布保留最后一帧，背景在滚动中完全静止，
-     停止滚动约 150ms 后恢复流动。 */
-  let pauseUntil = 0;
-  const onScroll = () => { pauseUntil = performance.now() + 150; };
-  window.addEventListener('scroll', onScroll, { passive: true });
+     停止滚动约 150ms 后恢复流动。
+     只对触屏主设备（hover: none）启用——桌面端指针精密、GPU 也够用，
+     一旦暂停反而会看到背景「突然停住」，得不偿失。
+     暂停期间动画时钟一并停走，恢复后波形从原处继续，不会往前跳。 */
+  const pauseWhileScrolling = window.matchMedia?.('(hover: none)').matches === true;
+  let pauseUntil = 0;    // 暂停截止时刻
+  let pauseStart = 0;    // 本次暂停起点，0 表示当前不在暂停
+  let pausedMs = 0;      // 累计被暂停的毫秒数
+  const onScroll = () => {
+    if (!pauseStart) pauseStart = performance.now();
+    pauseUntil = performance.now() + 150;
+  };
+  if (pauseWhileScrolling) window.addEventListener('scroll', onScroll, { passive: true });
 
   function resize() {
     const cssW = Math.max(1, canvas.clientWidth || window.innerWidth);
@@ -149,11 +159,15 @@ export function startShaderBackground(canvas) {
   function draw(now) {
     if (stopped) return;
     if (now < pauseUntil) {
+      lastNow = now;
       raf = requestAnimationFrame(draw);
       return;
     }
+    // 刚结束一段暂停：把这段时间从动画时钟里扣掉
+    if (pauseStart) { pausedMs += now - pauseStart; pauseStart = 0; }
+    lastNow = now;
     resize();
-    gl.uniform1f(uTime, (now - startTime) / 1000 * TIME_SCALE);
+    gl.uniform1f(uTime, (now - startTime - pausedMs) / 1000 * TIME_SCALE);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     raf = requestAnimationFrame(draw);
   }
@@ -178,6 +192,8 @@ export function startShaderBackground(canvas) {
       cancelAnimationFrame(raf);
       raf = 0;
     } else if (!raf && !stopped) {
+      // 后台这些时间没有渲染，从动画时钟里扣掉，切回来时波形不会前跳
+      if (lastNow) { pausedMs += performance.now() - lastNow; pauseStart = 0; }
       raf = requestAnimationFrame(draw);
     }
   };
