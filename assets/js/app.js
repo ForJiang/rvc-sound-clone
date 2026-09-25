@@ -6,7 +6,7 @@ import { initI18n, t, onLangChange, setLang, getLang, applyI18n } from './i18n.j
 import { $, $$, toast } from './ui.js';
 import { initState, state, refreshEngineChip } from './state.js';
 import { storageStatus } from './store.js';
-import { startLiquidBackground } from './liquid-bg.js';
+import { startShaderBackground } from './webgl-bg.js';
 import { viewConvert } from './views/convert.js';
 import { viewModels } from './views/models.js';
 import { viewSettings } from './views/settings.js';
@@ -157,8 +157,8 @@ function routeTitle(key) {
 /* ----------------------------- 启动 ----------------------------- */
 
 async function boot() {
-  // 液态金属背景：失败/不支持时静默保留 CSS 渐变兜底
-  startLiquidBackground(document.getElementById('liquidBg'));
+  // RGB 正弦波背景：失败/不支持时静默保留 CSS 渐变兜底
+  startShaderBackground(document.getElementById('bgShader'));
 
   initI18n();
   applyI18n(document);

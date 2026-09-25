@@ -64,7 +64,9 @@ RVC 的完整推理链（HuBERT 内容特征 + RMVPE 音高 + 检索索引 + HiF
 底色 `#0a0a0c`，玻璃面板 `rgba(13,14,18,.62)` + 白色 9% 描边 + `backdrop-blur(16px)`，
 圆角 22/14/9px，主 CTA 近白底深色字，内嵌表面用白色低透明度叠加（而非黑色凹槽）。
 
-`assets/js/liquid-bg.js` 用自研 WebGL fragment shader 画液态金属背景（metaballs + fbm 扰动），
+`assets/js/webgl-bg.js` 用自研 WebGL fragment shader 画 RGB 正弦波背景：三条正弦波分别驱动
+R/G/B 通道，横坐标按到屏幕中心的距离做 distortion 扭曲，`0.05 / abs(...)` 把分母趋零处收成
+细亮线，形成缓慢流动的彩带；参数为 xScale 1.0 / yScale 0.5 / distortion 0.05。
 内容统一压在玻璃面板上保证可读性。背景渲染带画质自适应档位（2560×1440 起步，p95 帧时间超标才降档），
 `prefers-reduced-motion` 下静态成一帧，WebGL 不可用时回落到 CSS 渐变。
 

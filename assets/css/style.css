@@ -74,8 +74,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* 液态金属背景：fixed 画布，内容全部压在玻璃面板上 */
-#liquidBg {
+/* RGB 正弦波背景：fixed 画布，内容全部压在玻璃面板上 */
+#bgShader {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -84,16 +84,15 @@ body {
   display: block;
   pointer-events: none;
 }
-/* WebGL 不可用时露出底层渐变 */
+/* WebGL 不可用时露出底层渐变：近黑底 + 极淡冷色，与波场观感一致 */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -3;
   background:
-    radial-gradient(1100px 620px at 14% -8%, rgba(120, 150, 200, 0.22), transparent 62%),
-    radial-gradient(900px 520px at 92% 4%, rgba(150, 130, 190, 0.18), transparent 60%),
-    radial-gradient(800px 600px at 50% 110%, rgba(90, 120, 170, 0.16), transparent 62%),
+    radial-gradient(1100px 620px at 14% -8%, rgba(90, 120, 170, 0.12), transparent 62%),
+    radial-gradient(900px 520px at 92% 4%, rgba(150, 130, 190, 0.09), transparent 60%),
     #0a0a0c;
 }
 
