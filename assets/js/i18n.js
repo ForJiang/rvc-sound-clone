@@ -6,6 +6,7 @@
 const DICT = {
   zh: {
     'brand.tag': '网页端声音克隆',
+    'brand.refresh': '回到首页并刷新网页',
 
     'nav.convert': '声音转换',
     'nav.models': '模型库',
@@ -198,6 +199,7 @@ const DICT = {
 
   en: {
     'brand.tag': 'Voice cloning in your browser',
+    'brand.refresh': 'Go home and reload the page',
 
     'nav.convert': 'Convert',
     'nav.models': 'Models',

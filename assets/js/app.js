@@ -137,6 +137,14 @@ function wireTopbar() {
   document.getElementById('engineChip')?.addEventListener('click', () => {
     location.hash = '#/settings';
   });
+
+  // 品牌区点击即刷新网页：hash 路由下重复点同一链接不会触发 hashchange，
+  // 所以显式回首页再 reload，让点击始终有"刷新"的反馈
+  document.querySelector('a.brand')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (location.hash !== '#/convert') location.hash = '#/convert';
+    location.reload();
+  });
 }
 
 function routeTitle(key) {
