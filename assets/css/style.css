@@ -309,7 +309,23 @@ p.lead { margin: 0; color: var(--ink-dim); text-shadow: var(--t-shadow-sm); }
 .grid { display: grid; gap: 18px; }
 .grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.grid.convert { grid-template-columns: minmax(0, 1fr) 252px minmax(0, 1fr); align-items: start; }
+.grid.convert { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); align-items: start; }
+/* 转换结果卡横跨整行：给波形留出宽度 */
+.grid.convert > .card-wide { grid-column: 1 / -1; }
+
+/* 参数卡内部横向排布：目标音色 | 快速预设 并排 */
+.param-inline { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: flex-start; }
+/* 基准宽度之和要小于一行可用宽度，否则两个块会被挤到两行 */
+.param-inline > .field-block { flex: 1 1 200px; min-width: 0; }
+.param-inline > .field-block:last-child { flex: 1.4 1 230px; }
+
+/* 五个参数滑块横向并排，宽屏一行放下，窄屏自动换行 */
+.sliders-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 12px 18px;
+}
+.sliders-row .slider-row { min-width: 0; }
 
 .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .row.tight { gap: 6px; }
@@ -643,6 +659,9 @@ table.data td.mono, table.data th.mono { font-variant-numeric: tabular-nums; }
 /* 2) 卡片内 加粗标题 与说明文字 */
 .card > strong + .faint,
 .card > strong + p { margin-top: 6px; }
+
+/* 2b) 参数卡：目标音色行 与 滑块行 之间 */
+.card > .param-inline + .sliders-row { margin-top: 16px; }
 
 /* 3) 提示/表格/拖拽区 紧跟按钮时，避免「警告条 + 大按钮」贴在一起 */
 .card > .notice + .btn,

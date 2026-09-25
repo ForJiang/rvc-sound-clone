@@ -332,15 +332,19 @@ export async function viewConvert(root) {
   const modelWarn = el('div', { id: 'modelWarn', style: 'margin:6px 0 14px' });
 
   const paramCard = card(t('convert.step2'), { step: 2 }, [
-    el('label.field', {}, [el('span.field-label', {}, [], t('convert.model')), modelSelect]),
-    modelWarn,
-    el('div', { style: 'margin-bottom:14px' }, [
-      el('div.field-label', {}, [], t('convert.presets')),
-      el('div.presets', { id: 'presetRow' }, PRESETS.map((p) => el('button.preset', {
-        type: 'button', dataset: { preset: p.id }, onClick: () => applyPreset(p),
-      }, [], t(p.key)))),
+    el('div.param-inline', {}, [
+      el('div.field-block', {}, [
+        el('label.field', {}, [el('span.field-label', {}, [], t('convert.model')), modelSelect]),
+        modelWarn,
+      ]),
+      el('div.field-block', {}, [
+        el('div.field-label', {}, [], t('convert.presets')),
+        el('div.presets', { id: 'presetRow' }, PRESETS.map((p) => el('button.preset', {
+          type: 'button', dataset: { preset: p.id }, onClick: () => applyPreset(p),
+        }, [], t(p.key)))),
+      ]),
     ]),
-    el('div.grid', { style: 'gap:14px' }, [pitch, indexRate, protect, rmsMix, filterRadius]),
+    el('div.sliders-row', {}, [pitch, indexRate, protect, rmsMix, filterRadius]),
     kbdHints,
     notice(t('convert.engine.warn'), { type: 'warn', icon: '⚠' }),
     runBtn,
@@ -441,6 +445,8 @@ export async function viewConvert(root) {
     el('div.row', { style: 'margin-top:12px' }, [dlBtn, dlZipBtn]),
     metricsEl,
   ]);
+  // 结果卡横跨整行，给波形和指标留出宽度
+  resultCard.classList.add('card-wide');
 
   function updateProgress(ratio) {
     trackFill.style.width = `${Math.max(0, Math.min(1, ratio)) * 100}%`;
