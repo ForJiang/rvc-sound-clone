@@ -413,7 +413,6 @@ export async function viewConvert(root) {
   });
   waveCanvas.addEventListener('player-time', (e) => {
     playhead.style.left = `${(e.detail / player.buffer.duration) * 100}%`;
-    updateProgress(e.detail / player.buffer.duration);
   });
   waveCanvas.addEventListener('click', (e) => {
     if (!player.buffer) return;
@@ -426,7 +425,6 @@ export async function viewConvert(root) {
   const playBtn = el('button.play-btn', { type: 'button', onclick: () => { player.toggle(); updatePlayBtn(player.playing); } }, [
     el('svg', { viewBox: '0 0 24 24', width: 18, height: 18 }, [el('path', { fill: 'currentColor', d: 'M8 5v14l11-7z' })]),
   ]);
-  const trackFill = el('div.track-fill');
   const timeLabel = el('span.time', {}, [], '0:00 / 0:00');
   const dlBtn = btn(t('convert.result.download'), { variant: 'ghost', size: 'sm', onClick: () => downloadCurrent() });
   const dlZipBtn = btn(t('convert.result.downloadAll'), { variant: 'ghost', size: 'sm', onClick: () => downloadZip() });
@@ -434,25 +432,13 @@ export async function viewConvert(root) {
 
   const resultCard = card(t('convert.step3'), { step: 3 }, [
     waveBox,
-    el('div.player', {}, [
-      playBtn,
-      el('div.track', { onclick: (e) => {
-        if (!player.buffer) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        player.play(((e.clientX - rect.left) / rect.width) * player.buffer.duration);
-        updatePlayBtn(true);
-      } }, [trackFill]),
-      timeLabel,
-    ]),
+    el('div.player', {}, [playBtn, timeLabel]),
     el('div.row', { style: 'margin-top:12px' }, [dlBtn, dlZipBtn]),
     metricsEl,
   ]);
   // 结果卡横跨整行，给波形和指标留出宽度
   resultCard.classList.add('card-wide');
 
-  function updateProgress(ratio) {
-    trackFill.style.width = `${Math.max(0, Math.min(1, ratio)) * 100}%`;
-  }
   function updatePlayBtn(playing) {
     playBtn.replaceChildren(el('svg', { viewBox: '0 0 24 24', width: 18, height: 18 }, [
       el('path', { fill: 'currentColor', d: playing ? 'M6 5h4v14H6zM14 5h4v14h-4z' : 'M8 5v14l11-7z' }),
@@ -466,7 +452,6 @@ export async function viewConvert(root) {
     player.load(res.audio);
     drawWave(waveCanvas, toMono(res.audio));
     timeLabel.textContent = `0:00 / ${fmtTime(res.audio.duration)}`;
-    updateProgress(0);
     metricsEl.textContent = t('convert.result.metrics', {
       ms: Math.round(res.metrics?.ms ?? 0),
       sr: res.sampleRate,
