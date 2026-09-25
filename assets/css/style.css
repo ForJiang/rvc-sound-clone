@@ -245,12 +245,12 @@ a:hover { color: #ffffff; }
 
 .view { min-width: 0; display: flex; flex-direction: column; gap: 20px; }
 
-/* 入场动画：opacity + y:30 上浮，delayChildren 0.2 / staggerChildren 0.15 */
-.view > * { animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
-.view > *:nth-child(1) { animation-delay: 0.05s; }
-.view > *:nth-child(2) { animation-delay: 0.15s; }
-.view > *:nth-child(3) { animation-delay: 0.25s; }
-.view > *:nth-child(4) { animation-delay: 0.35s; }
+/* 内容块入场：opacity + y:30 上浮。延迟不写死 nth-child——四个视图的挂载结构
+   不一样（help 整页裹在 .doc 里、convert 多套一层 .grid、models 套两层），
+   按 .view > * 猜层级只能命中外壳，卡片本身一动不动的。改由 app.js 的
+   staggerEnter() 按 DOM 顺序把延迟写进 --enter-delay，并打上 .enter。
+   只标路由初始渲染出来的块，交互中动态加进来的卡片不会突然淡入。 */
+.view .enter { animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) both; animation-delay: var(--enter-delay, 0s); }
 @keyframes rise { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
 
 /* ---------------- 卡片：rounded-3xl 玻璃 ---------------- */
@@ -881,5 +881,5 @@ table.data td.mono, table.data th.mono { font-variant-numeric: tabular-nums; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-  .view > * { animation: none; }
+  .view .enter { animation: none; }
 }

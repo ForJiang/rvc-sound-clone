@@ -19,6 +19,31 @@ const ROUTES = {
   '/help': viewHelp,
 };
 
+/* 参与入场的「内容块」。四个视图的挂载结构差别很大（help 整页裹在 .doc 里、
+   convert 多套一层 .grid、models 要再深一层），按 .view > * 猜层级只能命中外壳，
+   所以按块类型列出来。选择器重复命中的元素 querySelectorAll 只返回一次，
+   页脚的 section.card 同时命中 .card 与 .doc > section 不会动两次。 */
+const ENTER_SELECTOR = [
+  '.page-title',              // 各页大标题
+  '.lead',                    // 副标题
+  '.card',                    // 玻璃卡片
+  '.step-card',               // 帮助页四个流程步骤
+  '.panel',                   // 模型库的页签栏与表格（类名与别处共用，只在这里打标）
+  '.doc > section',           // 帮助页六个内容段（.doc 只在帮助页出现）
+  '.doc > .anchor-list',      // 帮助页目录条
+].join(',');
+
+/** 按 DOM 顺序给内容块排队上浮：延迟写在 --enter-delay 上，并打上 .enter。 */
+function staggerEnter(root) {
+  const blocks = [...root.querySelectorAll(ENTER_SELECTOR)];
+  blocks.forEach((b, i) => {
+    // 0.05s 起步、每块错 0.05s；帮助页有 15 个块，最多排到 0.75s，
+    // 再长的页面也封顶在 0.9s，别让最后一个块等太久
+    b.style.setProperty('--enter-delay', `${Math.min(0.05 + i * 0.05, 0.9).toFixed(2)}s`);
+    b.classList.add('enter');
+  });
+}
+
 let currentCleanup = null;
 
 /**
@@ -107,6 +132,7 @@ async function renderRoute() {
   try {
     const handle = await view(root);
     currentCleanup = handle?.destroy || null;
+    staggerEnter(root);   // 视图渲染完再排队，保证拿到最终的 DOM 顺序
   } catch (err) {
     console.error('[view]', err);
     root.append(

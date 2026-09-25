@@ -42,7 +42,7 @@ export async function viewModels(root) {
     el('p.lead', {}, [], t('models.sub')),
   ]);
 
-  const tabs = el('div.row.tight', {}, [
+  const tabs = el('div.row.tight.panel', {}, [
     tabBtn('models.tab.base', 'base'),
     tabBtn('models.tab.voice', 'voice'),
     tabBtn('models.tab.custom', 'custom'),
@@ -63,7 +63,7 @@ export async function viewModels(root) {
     );
   }
 
-  const table = el('div.table-wrap', {}, [
+  const table = el('div.table-wrap.panel', {}, [
     el('table.data', {}, [
       el('thead', {}, [el('tr', {}, [
         el('th', {}, [], t('models.col.name')),
@@ -76,6 +76,7 @@ export async function viewModels(root) {
     ]),
   ]);
 
+  // 不标 .panel：里面的来源卡自己就是 .card，逐个上浮比整块一起动更贴合「每张卡片都入场」
   const baseSources = el('div.grid.cols-2', {}, (sources.length ? sources : []).map((s) =>
     el('div.card', { style: { padding: '12px 14px' } }, [
       el('strong', {}, [], s.name),
