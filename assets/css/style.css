@@ -116,9 +116,6 @@ a:hover { color: #ffffff; }
   transition: opacity 0.35s ease, visibility 0.35s ease;
 }
 .boot.hidden { opacity: 0; visibility: hidden; }
-.boot-logo { animation: pulse 1.8s ease-in-out infinite; }
-/* 图标源图已是整幅不透明方块，启动图同样裁出圆角，与顶栏一致 */
-.boot-logo img { border-radius: 12px; }
 .boot-text { color: var(--ink-dim); margin: 0; font-size: 13px; text-shadow: var(--t-shadow-sm); }
 .boot-bar {
   width: 190px; height: 3px; border-radius: 99px;
@@ -130,7 +127,6 @@ a:hover { color: #ffffff; }
   animation: slide 1.15s ease-in-out infinite;
 }
 @keyframes slide { 0% { transform: translateX(-110%); } 100% { transform: translateX(260%); } }
-@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.07); opacity: 0.82; } }
 
 /* ---------------- 顶栏（对齐个人站：fixed + bg-black/50 + blur-md） ---------------- */
 .topbar {
@@ -147,12 +143,6 @@ a:hover { color: #ffffff; }
   border-bottom: 1px solid var(--line);
 }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); }
-/* 图标自身已带深色圆角底与细描边（favicon.svg），这里不再叠加边框/底色，
-   否则两道边叠在一起会形成一圈明显的白框 */
-.brand-logo {
-  width: 34px; height: 34px; flex: none;
-  border-radius: 10px;
-}
 .brand-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
 .brand-text strong { font-size: 15px; font-weight: 650; letter-spacing: 0.2px; }
 .brand-text strong .dot { color: rgba(255, 255, 255, 0.6); }
