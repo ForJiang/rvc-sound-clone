@@ -118,6 +118,12 @@ export function startShaderBackground(canvas) {
   let raf = 0;
   let stopped = false;
   let startTime = performance.now();
+  /* 滚动期间暂停渲染：移动端 GPU 一边合成滚动、一边画全屏 shader 就会抢资源导致
+     卡顿；暂停时不清屏，画布保留最后一帧，背景在滚动中完全静止，
+     停止滚动约 150ms 后恢复流动。 */
+  let pauseUntil = 0;
+  const onScroll = () => { pauseUntil = performance.now() + 150; };
+  window.addEventListener('scroll', onScroll, { passive: true });
 
   function resize() {
     const cssW = Math.max(1, canvas.clientWidth || window.innerWidth);
@@ -142,6 +148,10 @@ export function startShaderBackground(canvas) {
 
   function draw(now) {
     if (stopped) return;
+    if (now < pauseUntil) {
+      raf = requestAnimationFrame(draw);
+      return;
+    }
     resize();
     gl.uniform1f(uTime, (now - startTime) / 1000 * TIME_SCALE);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -215,6 +225,7 @@ export function startShaderBackground(canvas) {
     stop() {
       stopped = true;
       cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
       document.removeEventListener('visibilitychange', onVisibility);
     },
   };
