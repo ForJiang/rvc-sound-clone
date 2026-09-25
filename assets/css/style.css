@@ -118,6 +118,8 @@ a:hover { color: #ffffff; }
 }
 .boot.hidden { opacity: 0; visibility: hidden; }
 .boot-logo { animation: pulse 1.8s ease-in-out infinite; }
+/* 图标源图已是整幅不透明方块，启动图同样裁出圆角，与顶栏一致 */
+.boot-logo img { border-radius: 12px; }
 .boot-text { color: var(--ink-dim); margin: 0; font-size: 13px; text-shadow: var(--t-shadow-sm); }
 .boot-bar {
   width: 190px; height: 3px; border-radius: 99px;
