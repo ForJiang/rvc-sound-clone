@@ -36,7 +36,9 @@ English intro at the bottom → [English](#-english)
 
 > 玻璃面板与控件语言与 [Image Metadata Cleaner](https://forjiang.github.io/image-metadata-cleaner/) 一致：深色单一主题（`#0a0a0c`）、`rgba(13,14,18,.62)` 半透明玻璃面板（白色 9% 描边、16px 模糊）、22px 圆角卡片、近白主 CTA，内嵌表面统一用白色低透明度叠加。背景改为自研 WebGL fragment shader 绘制的 RGB 正弦波场（无第三方依赖）：三条正弦波分别驱动 R/G/B 通道、按到屏幕中心的距离扭曲，`0.05/abs(...)` 收成细亮线后形成流动彩带；带画质自适应档位，`prefers-reduced-motion` 下自动静止，WebGL 不可用时回落到 CSS 渐变。
 移动端做了三处适配：画布高度用 `100lvh`（地址栏收放时不重算尺寸，波形不会被拉伸跳动）、
-滚动期间暂停背景渲染（背景完全静止，GPU 让给页面合成，停下约 150ms 后恢复流动）、窄屏把面板模糊从 16px 降到 6px。
+窄屏把面板模糊从 16px 降到 6px、触屏设备滚动期间暂停背景渲染（背景完全静止，GPU 让给页面合成，停下约 150ms 后恢复流动）。
+暂停只在触屏主设备（`hover: none`）生效：桌面端指针精密、GPU 也够用，一旦暂停反而会看到背景突然停住；
+暂停时长也已从动画时钟里扣掉，恢复时波形从原处继续，不会一帧之内往前跳。
 站点图标（favicon）以 base64 内联在 HTML 里，规避浏览器 favicon 缓存导致标签页不更新；文件形式的多尺寸图标由 `tools/make_icons.py` 生成。
 
 ## 🧩 它是怎么工作的
