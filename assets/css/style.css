@@ -300,7 +300,12 @@ p.lead { margin: 0; color: var(--ink-dim); text-shadow: var(--t-shadow-sm); }
 .grid { display: grid; gap: 18px; }
 .grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.grid.convert { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); align-items: start; }
+.grid.convert { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); align-items: stretch; }
+/* 第一张卡与右侧参数卡等高：内部改为纵向 flex，队列区吃掉剩余高度，
+   否则卡片下方会空出一块，页面右下角显得稀 */
+.grid.convert > .card-fill { display: flex; flex-direction: column; }
+.grid.convert > .card-fill > .file-list { flex: 1 1 auto; min-height: 168px; }
+.grid.convert > .card-fill > .file-list > .empty-state { flex: 1; align-content: center; }
 /* 转换结果卡横跨整行：给波形留出宽度 */
 .grid.convert > .card-wide { grid-column: 1 / -1; }
 

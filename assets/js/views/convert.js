@@ -114,6 +114,8 @@ export async function viewConvert(root) {
     ]),
     queueList,
   ]);
+  // 与右侧参数卡等高，队列区自动填充剩余高度
+  inputCard.classList.add('card-fill');
 
   function tabBtn(key, id) {
     return btn(t(key), {
