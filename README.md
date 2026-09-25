@@ -136,7 +136,7 @@ rvc-sound-clone/
 ├─ assets/version.json     构建版本号（用于新版本提示）
 ├─ assets/
 │  ├─ css/style.css        深色玻璃设计系统、响应式布局
-│  ├─ favicon.svg / favicon.ico / icon-*.png   多尺寸站点图标
+│  ├─ favicon.svg / favicon.ico / icon-*.png   多尺寸站点图标（tools/make_icons.py 生成）
 │  └─ js/
 │     ├─ app.js            启动引导 + 路由 + 顶栏
 │     ├─ state.js          设置、共享状态、引擎工厂

@@ -5,9 +5,8 @@
       <stop offset="1" stop-color="#c3c9d6"/>
     </linearGradient>
   </defs>
-  <!-- 深色圆角底：与站点的玻璃/液态金属视觉一致 -->
+  <!-- 深色圆角底：与站点的玻璃/液态金属视觉一致（无描边，避免小尺寸下出现白框） -->
   <rect x="1" y="1" width="62" height="62" rx="15" fill="#0a0a0c"/>
-  <rect x="1.5" y="1.5" width="61" height="61" rx="14.5" fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="1.5"/>
   <!-- 三条音量柱：小尺寸下依然清晰可辨 -->
   <g fill="url(#ink)">
     <rect x="17" y="26" width="8" height="12" rx="4"/>
