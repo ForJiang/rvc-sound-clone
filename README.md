@@ -30,10 +30,14 @@ English intro at the bottom → [English](#-english)
 
 ![转换页](docs/screenshot-convert.png)
 
-转换页按「准备原始音频 → 选择音色与参数 → 播放导出」三步排布，右侧结果区可试听、下载 WAV 或打包 ZIP；
+转换页分三步：第一行「准备原始音频」与「选择音色与参数」左右并排（参数卡的五个滑块横向排布，队列区自动填满卡片剩余高度），
+第二行「转换结果」横跨整页，波形更宽，可试听、下载 WAV 或打包 ZIP；
 四个快速预设（男→女 / 女→男 / 同性别微调 / 自然保真）一键套用常用参数组合，队列支持原声试听。
 
 > 玻璃面板与控件语言与 [Image Metadata Cleaner](https://forjiang.github.io/image-metadata-cleaner/) 一致：深色单一主题（`#0a0a0c`）、`rgba(13,14,18,.62)` 半透明玻璃面板（白色 9% 描边、16px 模糊）、22px 圆角卡片、近白主 CTA，内嵌表面统一用白色低透明度叠加。背景改为自研 WebGL fragment shader 绘制的 RGB 正弦波场（无第三方依赖）：三条正弦波分别驱动 R/G/B 通道、按到屏幕中心的距离扭曲，`0.05/abs(...)` 收成细亮线后形成流动彩带；带画质自适应档位，`prefers-reduced-motion` 下自动静止，WebGL 不可用时回落到 CSS 渐变。
+移动端做了三处适配：画布高度用 `100lvh`（地址栏收放时不重算尺寸，波形不会被拉伸跳动）、
+滚动期间暂停背景渲染（背景完全静止，GPU 让给页面合成，停下约 150ms 后恢复流动）、窄屏把面板模糊从 16px 降到 6px。
+站点图标（favicon）以 base64 内联在 HTML 里，规避浏览器 favicon 缓存导致标签页不更新；文件形式的多尺寸图标由 `tools/make_icons.py` 生成。
 
 ## 🧩 它是怎么工作的
 
@@ -152,8 +156,7 @@ rvc-sound-clone/
 ├─ models/manifest.json    基础模型与模型来源登记
 ├─ tools/export_onnx.py    .pth → ONNX 转换脚本
 ├─ server/bridge.py        本地服务桥接层（纯标准库）
-├─ docs/                   用法、模型转换、FAQ、架构
-└─ docs/                    用法、模型转换、FAQ、架构、部署
+└─ docs/                   用法、模型转换、FAQ、架构、部署
 ```
 
 ## 🗺️ 路线图
