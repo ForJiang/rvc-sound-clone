@@ -89,7 +89,7 @@ export function confirmDialog(message, { title = t('common.confirm'), okText = t
   return new Promise((resolve) => {
     const m = modal({
       title,
-      body: [el('p', { style: { margin: '0', color: 'var(--text-dim)' } }, [], message)],
+      body: [el('p', { style: { margin: '0', color: 'var(--ink-dim)' } }, [], message)],
       footer: [
         el('button.btn.ghost', { type: 'button', onclick: () => { m.close(); resolve(false); } }, [], t('common.cancel')),
         el('button.btn' + (danger ? '.danger' : '.primary'), {

@@ -116,7 +116,7 @@ export async function viewModels(root) {
     const rows = visibleEntries();
     if (!rows.length) {
       tableBody.replaceChildren(el('tr', {}, [el('td', {
-        colspan: 5, style: 'text-align:center;color:var(--text-faint);padding:22px;line-height:1.7;max-width:640px;margin:0 auto',
+        colspan: 5, style: 'text-align:center;color:var(--ink-faint);padding:22px;line-height:1.7;max-width:640px;margin:0 auto',
       }, [], t(EMPTY_MSG[tab] || 'models.empty.imported'))]));
       return;
     }

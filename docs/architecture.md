@@ -60,10 +60,12 @@ RVC 的完整推理链（HuBERT 内容特征 + RMVPE 音高 + 检索索引 + HiF
 
 ## 视觉系统
 
-跟随 [ForJiang.github.io](https://github.com/ForJiang/ForJiang.github.io) 的设计语言：深色单一主题，
+与 [Image Metadata Cleaner](https://forjiang.github.io/image-metadata-cleaner/) 同一套设计变量：
+底色 `#0a0a0c`，玻璃面板 `rgba(13,14,18,.62)` + 白色 9% 描边 + `backdrop-blur(16px)`，
+圆角 22/14/9px，主 CTA 近白底深色字，内嵌表面用白色低透明度叠加（而非黑色凹槽）。
+
 `assets/js/liquid-bg.js` 用自研 WebGL fragment shader 画液态金属背景（metaballs + fbm 扰动），
-同一文件内实现白色鼠标流光；内容统一压在 `bg-black/40 + border-white/15 + backdrop-blur` 的
-玻璃面板上保证可读性。背景渲染带画质自适应档位（2560×1440 起步，p95 帧时间超标才降档），
+内容统一压在玻璃面板上保证可读性。背景渲染带画质自适应档位（2560×1440 起步，p95 帧时间超标才降档），
 `prefers-reduced-motion` 下静态成一帧，WebGL 不可用时回落到 CSS 渐变。
 
 ## 部署
