@@ -97,8 +97,9 @@ body::before {
     #0a0a0c;
 }
 
-a { color: var(--ink); text-decoration: none; }
-a:hover { text-decoration: underline; }
+/* 全站链接一律不带下划线（悬停也不加），与 image-metadata-cleaner 一致 */
+a, a:hover, a:focus, a:active { color: var(--ink); text-decoration: none; }
+a:hover { color: #ffffff; }
 ::selection { background: rgba(255, 255, 255, 0.28); }
 
 /* ---------------- 启动遮罩 ---------------- */
