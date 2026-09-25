@@ -25,7 +25,7 @@ let currentCleanup = null;
  * 当前页面构建对应的提交号；与 assets/version.json 比对判断是否有新版。
  * 发版时同步更新这里的值和 assets/version.json 的 version 字段。
  */
-const BUILD = 'aa2ccc31';
+const BUILD = '1f418413';
 
 const CHECK_INTERVAL_MS = 5 * 60 * 1000;   // 5 分钟轮询一次
 let updateNotified = false;
