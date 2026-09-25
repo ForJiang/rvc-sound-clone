@@ -5,6 +5,12 @@
 不依赖 PIL / numpy / cairosvg。改了 favicon.svg 的几何后重跑本脚本即可。
 
     python3 tools/make_icons.py
+
+图标分为两种底：
+- 圆角渐变底（rx=14，左上 #2a2c33 → 右下 #101114），用于 favicon 与 manifest；
+  圆角四角是透明的，压在深色标签栏上才有圆角轮廓。
+- 直角站点底色（#0a0a0c）整幅不透明，只给 apple-touch-icon：iOS 自己会套圆角
+  mask，预先裁圆的源图会被二次裁切，透明角还会透出桌面壁纸。
 """
 import math
 import os
@@ -14,9 +20,14 @@ import zlib
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets")
 
 VIEW = 64.0
-# 深色底：整幅填充（左上角坐标、宽高、圆角半径 0 = 无圆角无透明角）
-TILE = (0.0, 0.0, 64.0, 64.0, 0.0)
-TILE_RGB = (0x0A / 255, 0x0A / 255, 0x0C / 255)
+# 深色底：左上角坐标、宽高、圆角半径，以及左上→右下的斜向渐变（与 SVG 的 tile 渐变一致）
+TILE = (0.0, 0.0, 64.0)
+TILE_R = 14.0
+TILE_A = (0x2A / 255, 0x2C / 255, 0x33 / 255)
+TILE_B = (0x10 / 255, 0x11 / 255, 0x14 / 255)
+# apple-touch-icon 专用：直角 + 单一站点底色。iOS 会自己套一层圆角 mask，
+# 源图预先裁圆角会被二次裁切，透明角还会透出用户桌面壁纸。
+FLAT_TILE = (0x0A / 255, 0x0A / 255, 0x0C / 255)
 # 三条音量柱（x, y, w, h），统一圆角半径
 BARS = [(17.0, 26.0, 8.0, 12.0), (28.0, 15.0, 8.0, 34.0), (39.0, 21.0, 8.0, 22.0)]
 BAR_R = 4.0
@@ -29,7 +40,7 @@ ICO_SIZES = [16, 32, 48]
 
 
 def clamp(v, lo=0.0, hi=1.0):
-    return lo if v < lo else hi if v > hi else v
+    return lo if v < lo else hi if v > hi else 1.0
 
 
 def sd_round_rect(px, py, x, y, w, h, r):
@@ -45,30 +56,38 @@ def coverage(dist, px_per_unit):
     return clamp(0.5 - dist * px_per_unit, 0.0, 1.0)
 
 
-def render(size):
-    """返回 RGBA bytes，长宽均为 size。"""
+def tile_rgb(sx, sy):
+    """底色：斜向渐变。渐变轴是 (0,0)→(1,1)，投影参数即 (u+v)/2。"""
+    t = (sx + sy) / (2.0 * VIEW)
+    return tuple(TILE_A[i] + (TILE_B[i] - TILE_A[i]) * clamp(t) for i in range(3))
+
+
+def render(size, tile_r=TILE_R, flat=False):
+    """返回 RGBA bytes，长宽均为 size。flat=True 时输出直角整幅不透明的底。"""
     scale = VIEW / size                 # 每像素覆盖多少 viewBox 单位
     px_per_unit = size / VIEW
+    x, y, w = TILE
     out = bytearray()
     for py_i in range(size):
         sy = (py_i + 0.5) * scale       # 像素中心的 SVG 坐标
         for px_i in range(size):
             sx = (px_i + 0.5) * scale
-            tile_cov = coverage(sd_round_rect(sx, sy, *TILE), px_per_unit)
+            tile_cov = coverage(sd_round_rect(sx, sy, x, y, w, w, tile_r), px_per_unit)
             if tile_cov <= 0.0:
                 out.extend((0, 0, 0, 0))
                 continue
             # 音量柱：取覆盖率最大的那一根（柱之间不重叠，等价于并集）
             best = 0.0
-            for (x, y, w, h) in BARS:
-                c = coverage(sd_round_rect(sx, sy, x, y, w, h, BAR_R), px_per_unit)
+            for (bx, by, bw, bh) in BARS:
+                c = coverage(sd_round_rect(sx, sy, bx, by, bw, bh, BAR_R), px_per_unit)
                 if c > best:
                     best = c
             # 纵向渐变（SVG 的 y1=0 → y2=64）
             t = clamp(sy / VIEW)
             grad = tuple(GRAD_TOP[i] + (GRAD_BOT[i] - GRAD_TOP[i]) * t for i in range(3))
-            rgb = tuple(TILE_RGB[i] + (grad[i] - TILE_RGB[i]) * best for i in range(3))
-            a = tile_cov * 255.0
+            base = FLAT_TILE if flat else tile_rgb(sx, sy)
+            rgb = tuple(base[i] + (grad[i] - base[i]) * best for i in range(3))
+            a = 255.0 if flat else tile_cov * 255.0
             out.extend((int(round(rgb[0] * 255)), int(round(rgb[1] * 255)),
                         int(round(rgb[2] * 255)), int(round(a))))
     return bytes(out)
@@ -108,12 +127,14 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     rendered = {}
     for size in PNG_SIZES:
-        png = png_bytes(size, render(size))
+        # 180 是 apple-touch-icon：直角 + 整幅不透明，交给 iOS 去套圆角
+        flat = size == 180
+        png = png_bytes(size, render(size, tile_r=0.0 if flat else TILE_R, flat=flat))
         path = os.path.join(OUT_DIR, f"icon-{size}.png")
         with open(path, "wb") as f:
             f.write(png)
         rendered[size] = png
-        print(f"icon-{size}.png  {len(png)} bytes")
+        print(f"icon-{size}.png  {len(png)} bytes{'（直角整幅不透明，apple-touch-icon 用）' if flat else ''}")
     ico = ico_bytes([(s, rendered[s]) for s in ICO_SIZES])
     with open(os.path.join(OUT_DIR, "favicon.ico"), "wb") as f:
         f.write(ico)

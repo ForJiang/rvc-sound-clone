@@ -1,12 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2a2c33"/>
+      <stop offset="1" stop-color="#101114"/>
+    </linearGradient>
     <linearGradient id="ink" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#ffffff"/>
       <stop offset="1" stop-color="#c3c9d6"/>
     </linearGradient>
   </defs>
-  <!-- 深色底：整幅填充不留透明角，避免标签页里透出标签栏颜色 -->
-  <rect x="0" y="0" width="64" height="64" fill="#0a0a0c"/>
+  <!-- 圆角底：与 image-metadata-cleaner 同一套（rx=14 + 左上到右下的斜向渐变）。
+       纯 #0a0a0c 直角块在标签页里发闷，且与深色标签栏之间没有层次，圆角轮廓显不出来；
+       略亮的渐变底让 16px 下圆角依然分明。 -->
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="url(#tile)"/>
   <!-- 三条音量柱：小尺寸下依然清晰可辨 -->
   <g fill="url(#ink)">
     <rect x="17" y="26" width="8" height="12" rx="4"/>
