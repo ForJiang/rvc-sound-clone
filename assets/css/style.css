@@ -146,11 +146,11 @@ a:hover { color: #ffffff; }
   border-bottom: 1px solid var(--line);
 }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); }
+/* 图标自身已带深色圆角底与细描边（favicon.svg），这里不再叠加边框/底色，
+   否则两道边叠在一起会形成一圈明显的白框 */
 .brand-logo {
   width: 34px; height: 34px; flex: none;
   border-radius: 10px;
-  background: linear-gradient(150deg, #2a2c33, #101114);
-  border: 1px solid var(--line-strong);
 }
 .brand-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
 .brand-text strong { font-size: 15px; font-weight: 650; letter-spacing: 0.2px; }
