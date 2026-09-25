@@ -39,6 +39,8 @@ English intro at the bottom → [English](#-english)
 窄屏把面板模糊从 16px 降到 6px、触屏设备滚动期间暂停背景渲染（背景完全静止，GPU 让给页面合成，停下约 150ms 后恢复流动）。
 暂停只在触屏主设备（`hover: none`）生效：桌面端指针精密、GPU 也够用，一旦暂停反而会看到背景突然停住；
 暂停时长也已从动画时钟里扣掉，恢复时波形从原处继续，不会一帧之内往前跳。
+每个视图的卡片都有上浮入场（`opacity` 0→1 + `translateY(30px)`→0，0.5s），按页面里的 DOM 顺序错峰浮现，
+0.05s 起步、每块错 0.05s；`prefers-reduced-motion` 下自动关闭，内容直接呈现。
 站点图标（favicon）以 base64 内联在 HTML 里，规避浏览器 favicon 缓存导致标签页不更新；文件形式的多尺寸图标由 `tools/make_icons.py` 从 `favicon.svg` 的几何重新生成（纯标准库，圆角矩形 SDF 光栅化，不依赖 PIL）。图标底是 `rx=14` 圆角 + 左上 `#2a2c33` 到右下 `#101114` 的斜向渐变，与 image-metadata-cleaner 同一套——纯深色直角块压在深色标签栏上看不出圆角，略亮的渐变底才让轮廓在小尺寸下依然分明。`apple-touch-icon` 是唯一的例外，保持直角整幅不透明：iOS 会自己套圆角 mask，预先裁圆的源图会被二次裁切，透明角还会透出桌面壁纸。
 
 ## 🧩 它是怎么工作的

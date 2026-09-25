@@ -81,6 +81,26 @@ R/G/B 通道，横坐标按到屏幕中心的距离做 distortion 扭曲，`0.05
 波形在一帧内前跳——即「背景突然静止、卡顿」。暂停期与切后台期的时长会从动画时钟里扣掉，
 恢复时波形从原处继续。移动端暂停本身保留（那是省 GPU 的本意），只把恢复前跳消掉。
 
+### 内容块入场
+
+每张卡片都有一个上浮入场（`opacity: 0 → 1` + `translateY(30px → 0)`，0.5s），
+按页面里的 DOM 顺序错峰浮现。实现分两半：
+
+- `assets/js/app.js` 的 `staggerEnter()` 在路由渲染完后遍历内容块，把延迟写进
+  每个块的 `--enter-delay`（0.05s 起步、每块错 0.05s、封顶 0.9s），并打上 `.enter`。
+- `style.css` 里 `.view .enter` 读这个变量播 `rise` 关键帧。
+
+为什么不直接写 `.view > *` + `nth-child`：四个视图的挂载结构差别很大（help 整页裹在
+`.doc` 里、convert 多套一层 `.grid`、models 要再深一层），按直接子元素猜层级命中的
+全是外壳，卡片本身一动不动。所以改成按块类型列出选择器（`.card` / `.step-card` /
+`.page-title` / `.doc > section` / `.panel` 等），模型库的页签栏与表格类名与别处共用，
+单独用 `.panel` 打标。
+
+两点约束：只标路由初始渲染出来的块，交互中动态加进来的卡片不会突然淡入；
+`.enter` 不能嵌套（父子都套动画位移会叠加），所以模型库的来源网格不打 `.panel`，
+让里面每张 `.card` 自己上浮。`prefers-reduced-motion: reduce` 下整条关掉，
+内容直接呈现。
+
 ### 站点图标
 
 图标分两套底，都由 `tools/make_icons.py` 从 `assets/favicon.svg` 的几何光栅化生成
