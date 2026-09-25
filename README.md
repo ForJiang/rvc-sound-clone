@@ -143,8 +143,10 @@ rvc-sound-clone/
 ├─ manifest.webmanifest    PWA 元信息
 ├─ assets/version.json     构建版本号（用于新版本提示）
 ├─ assets/
-│  ├─ css/style.css        深色玻璃设计系统、响应式布局
-│  ├─ favicon.svg / favicon.ico / icon-*.png   多尺寸站点图标（tools/make_icons.py 生成；icon-180 为 apple-touch-icon，单独保持直角整幅不透明）
+│  ├─ css/style.css        深色玻璃设计系统、响应式布局、卡片入场动画
+│  ├─ favicon.svg          图标源：rx=14 圆角 + 斜向渐变底
+│  ├─ favicon.ico          多分辨率 ICO（16/32/48）
+│  ├─ icon-*.png           多尺寸 PNG，make_icons.py 生成
 │  └─ js/
 │     ├─ app.js            启动引导 + 路由 + 顶栏
 │     ├─ state.js          设置、共享状态、引擎工厂
@@ -159,6 +161,7 @@ rvc-sound-clone/
 │     └─ views/            convert / models / settings / help
 ├─ models/manifest.json    基础模型与模型来源登记
 ├─ tools/export_onnx.py    .pth → ONNX 转换脚本
+├─ tools/make_icons.py     favicon.svg → 多尺寸 PNG / ICO
 ├─ server/bridge.py        本地服务桥接层（纯标准库）
 └─ docs/                   用法、模型转换、FAQ、架构、部署
 ```
