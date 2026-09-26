@@ -9,13 +9,19 @@
  * 参考实现每帧 time += 0.01（60fps 下约 0.6/秒），这里用秒为单位再折合该速率，
  * 避免高刷新率屏幕上动画被拉快。
  *
+ * 清晰度：波形是按归一化坐标生成的，与渲染分辨率无关，所以「多给像素」只会让细亮线
+ * 更锐、不会改变画面。DPR_CAP 决定要不要按屏幕实拍密度渲染——小于 devicePixelRatio
+ * 时浏览器会把画布放大，细线立刻发虚。档位上限同样如此：宁可留给 tuneQuality 去降，
+ * 也不要一开始就欠采样。
+ *
  * 画质自适应：从最高档渲染缓冲起步，实测 p95 帧时间不达标才逐级降档；
  * 抗锯齿靠超采样（渲染精度高于 CSS 分辨率），所以降档只影响锐度、不产生锯齿。
  */
 
-const QUALITY_TIERS = [2560 * 1440, 1920 * 1080, 1280 * 720];
+// 档位是「渲染缓冲的总像素上限」，从高到低；降档只掉锐度不产生锯齿
+const QUALITY_TIERS = [3840 * 2160, 2560 * 1440, 1600 * 900];
 const TARGET_FRAME_MS = 17.5;   // ≈57fps 的帧预算
-const DPR_CAP = 1.5;
+const DPR_CAP = 2;              // 按屏幕实拍密度渲染；低于 devicePixelRatio 会被浏览器放大
 const TIME_SCALE = 0.6;         // 秒 → shader 的时间单位
 
 const VERT = `
@@ -113,6 +119,11 @@ export function startShaderBackground(canvas) {
   gl.uniform1f(uScaleY, 0.5);
   gl.uniform1f(uDistort, 0.05);
 
+  /* 渲染缓冲能不能开到这个尺寸，最终由 GL 的上限说话。档位和 DPR_CAP 只是期望值，
+     真超过了 drawArrays 会静默失败（画面上什么都不显示），所以在设尺寸前先夹一道。 */
+  const glMaxW = gl.getParameter(gl.MAX_VIEWPORT_DIMS)?.[0] || 8192;
+  const glMaxH = gl.getParameter(gl.MAX_VIEWPORT_DIMS)?.[1] || 8192;
+
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   let maxPixels = QUALITY_TIERS[0];
   let raf = 0;
@@ -135,12 +146,23 @@ export function startShaderBackground(canvas) {
   };
   if (pauseWhileScrolling) window.addEventListener('scroll', onScroll, { passive: true });
 
-  function resize() {
-    const cssW = Math.max(1, canvas.clientWidth || window.innerWidth);
-    const cssH = Math.max(1, canvas.clientHeight || window.innerHeight);
+  /* 画布尺寸：CSS 是 width:100% + height:100lvh，两者都由视口决定，
+     所以只在「盒子尺寸真的变了」时重算即可。用 ResizeObserver 而不是每帧读
+     clientWidth/clientHeight——每帧读布局属性会强制同步 layout，
+     滚动和入场动画期间白搭一次重排，纯粹是浪费。
+     老浏览器退回 resize / orientationchange 事件。 */
+  let lastW = 0;
+  let lastH = 0;
+  function applySize(cssW, cssH) {
     const dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
     let w = Math.round(cssW * dpr);
     let h = Math.round(cssH * dpr);
+    // GL 上限兜底：超了 drawArrays 会静默失败，画面直接全黑
+    if (w > glMaxW || h > glMaxH) {
+      const k = Math.min(glMaxW / w, glMaxH / h);
+      w = Math.max(1, Math.floor(w * k));
+      h = Math.max(1, Math.floor(h * k));
+    }
     // 按画质档位上限裁剪（保持宽高比）
     const px = w * h;
     if (px > maxPixels) {
@@ -148,13 +170,49 @@ export function startShaderBackground(canvas) {
       w = Math.max(1, Math.round(w * k));
       h = Math.max(1, Math.round(h * k));
     }
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w;
-      canvas.height = h;
-      gl.viewport(0, 0, w, h);
-      gl.uniform2f(uRes, w, h);
-    }
+    if (w === lastW && h === lastH) return;
+    lastW = w; lastH = h;
+    canvas.width = w;
+    canvas.height = h;
+    gl.viewport(0, 0, w, h);
+    gl.uniform2f(uRes, w, h);
   }
+
+  function measureFromCanvas() {
+    applySize(
+      Math.max(1, canvas.clientWidth || window.innerWidth),
+      Math.max(1, canvas.clientHeight || window.innerHeight),
+    );
+  }
+
+  /** ResizeObserver 的 entry 自带盒子尺寸，读它不触发 layout。 */
+  function measureFromEntry(entry) {
+    let w = 0, h = 0;
+    if (entry.contentBoxSize && entry.contentBoxSize[0]) {
+      w = entry.contentBoxSize[0].inlineSize;
+      h = entry.contentBoxSize[0].blockSize;
+    } else if (entry.contentRect) {
+      w = entry.contentRect.width;
+      h = entry.contentRect.height;
+    }
+    if (w && h) applySize(Math.max(1, w), Math.max(1, h));
+    else measureFromCanvas();
+  }
+
+  measureFromCanvas();
+
+  /* ResizeObserver 管「盒子尺寸变了」。resize / orientationchange 仍然要听——
+     devicePixelRatio 变化时（窗口拖到另一块屏幕、改系统显示缩放）CSS 尺寸并没变，
+     ResizeObserver 不会触发，得靠 resize 事件按新 DPR 重算；老浏览器也只有事件可用。 */
+  let sizeObserver = null;
+  if (typeof ResizeObserver === 'function') {
+    sizeObserver = new ResizeObserver((entries) => {
+      for (const e of entries) measureFromEntry(e);
+    });
+    sizeObserver.observe(canvas);
+  }
+  window.addEventListener('resize', measureFromCanvas);
+  window.addEventListener('orientationchange', measureFromCanvas);
 
   function draw(now) {
     if (stopped) return;
@@ -166,13 +224,11 @@ export function startShaderBackground(canvas) {
     // 刚结束一段暂停：把这段时间从动画时钟里扣掉
     if (pauseStart) { pausedMs += now - pauseStart; pauseStart = 0; }
     lastNow = now;
-    resize();
     gl.uniform1f(uTime, (now - startTime - pausedMs) / 1000 * TIME_SCALE);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     raf = requestAnimationFrame(draw);
   }
 
-  resize();
   gl.uniform1f(uTime, 0);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 
@@ -206,7 +262,7 @@ export function startShaderBackground(canvas) {
     for (const tier of QUALITY_TIERS) {
       if (stopped) return;
       maxPixels = tier;
-      resize();
+      measureFromCanvas();   // 档位变了，按新上限重算一次缓冲尺寸
       await new Promise((r) => setTimeout(r, 900));
       if (stopped) return;
       const ms = await measureFrameTime();
@@ -242,7 +298,10 @@ export function startShaderBackground(canvas) {
       stopped = true;
       cancelAnimationFrame(raf);
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', measureFromCanvas);
+      window.removeEventListener('orientationchange', measureFromCanvas);
       document.removeEventListener('visibilitychange', onVisibility);
+      if (typeof ResizeObserver === 'function') sizeObserver?.disconnect();
     },
   };
 }

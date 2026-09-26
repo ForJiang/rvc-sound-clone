@@ -43,8 +43,7 @@ export class Recorder {
     this._onLimit = null;
     this.maxMs = 0;          // 0 = 不限时长
     this._starting = false;  // start() 异步进行中的标志，防连点拿到多条流
-    this._meterCanvas = null;  // attachMeter 已绑定的画布，避免重渲染时累积循环
-    this._meterLoop = 0;
+    this._meterCanvas = null;  // 电平画布，由录音主循环统一绘制
   }
 
   get recording() {
@@ -97,6 +96,9 @@ export class Recorder {
       const rms = Math.sqrt(sum / buf.length);
       this._onLevel?.(Math.min(1, rms * 2.6));
       this._onTick?.(elapsed, this.maxMs);
+      // 电平波形与电平条共用这一条循环：分开各起一条 rAF 时，每帧要把 analyser
+      // 读两遍、画布画两遍，而且每次重渲染都会多攒一条循环
+      if (this._meterCanvas) drawMeter(this._meterCanvas, this.analyser);
       if (this.maxMs && elapsed >= this.maxMs) {
         this._onLimit?.(this.maxMs);   // 到上限：把真实上限交给上层，提示文案才对得上
         return;
@@ -137,31 +139,22 @@ export class Recorder {
     this._onTick = null;
     this._onLimit = null;
     this.maxMs = 0;
-    // 停掉电平画布那条循环，并把最后一帧清掉——不留一段静止的残影
+    // 电平画布跟着主循环一起停，这里把最后一帧清掉——不留一段静止的残影
     if (this._meterCanvas) {
-      const c = this._meterCanvas;
-      c.getContext('2d').clearRect(0, 0, c.width, c.height);
+      const c2d = this._meterCanvas.getContext('2d');
+      c2d.setTransform(1, 0, 0, 1, 0, 0);   // drawMeter 留了缩放缓动，清屏要按设备像素来
+      c2d.clearRect(0, 0, this._meterCanvas.width, this._meterCanvas.height);
     }
-    cancelAnimationFrame(this._meterLoop);
-    this._meterLoop = 0;
     this._meterCanvas = null;
   }
 
   /**
-   * 把 AnalyserNode 绑到 canvas 上画实时电平（停止时自动清空）。
-   * 同一块画布只允许一条循环：切 tab / 切语言都会重新走到这里，
-   * 不拦的话每重渲染一次就多一条并发的 rAF（实测切 10 次多出 5 条）。
+   * 登记电平画布：由录音主循环统一绘制（见 start() 里的 loop）。
+   * 不再自己起 rAF——分开起会让每帧读两遍 analyser、画两遍画布，
+   * 而且每次重渲染都会多攒一条并发循环。
    */
   attachMeter(canvas) {
-    if (this._meterCanvas === canvas && this._meterLoop) return;
-    cancelAnimationFrame(this._meterLoop);
     this._meterCanvas = canvas;
-    const loop = () => {
-      if (!this.analyser) { canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height); return; }
-      drawMeter(canvas, this.analyser);
-      this._meterLoop = requestAnimationFrame(loop);
-    };
-    this._meterLoop = requestAnimationFrame(loop);
   }
 }
 
@@ -314,7 +307,7 @@ export function encodeWav(channels, sampleRate) {
   return new Blob([buffer], { type: 'audio/wav' });
 }
 
-export function mixToMono(channels) {
+function mixToMono(channels) {
   const len = channels[0].length;
   if (channels.length === 1) return channels[0];
   const out = new Float32Array(len);
@@ -401,21 +394,4 @@ export class Player {
     if (this.playing) this.stop();
     else this.play(0);
   }
-}
-
-/** 计算峰值，用于绘制静态波形。 */
-export function peaksOf(samples, buckets = 220) {
-  if (!samples?.length) return [];
-  const step = Math.max(1, Math.floor(samples.length / buckets));
-  const out = [];
-  for (let i = 0; i < buckets; i++) {
-    let peak = 0;
-    const start = i * step;
-    for (let j = 0; j < step; j++) {
-      const v = Math.abs(samples[start + j] ?? 0);
-      if (v > peak) peak = v;
-    }
-    out.push(peak);
-  }
-  return out;
 }

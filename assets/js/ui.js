@@ -247,6 +247,13 @@ export function drawWave(canvas, samples, { progress = 0, color, wave = 'rgba(25
   }
 }
 
+/* 渐变按高度缓存：每条都要一根从底到自身顶端的渐变，逐帧 createLinearGradient
+   一帧要建 24 个对象。缓存键带上画布高度——高度随布局变化，坐标空间也变了，
+   不能跨高度复用。四舍五入后命中，画面与原实现一致。analyser 的缓冲同理复用。 */
+const meterGrads = new Map();
+let meterBuf = new Uint8Array(0);
+let meterGradH = -1;
+
 /** 简易频谱条，用于实时录音电平。 */
 export function drawMeter(canvas, analyser) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -257,7 +264,10 @@ export function drawMeter(canvas, analyser) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
   if (!analyser) return;
-  const buf = new Uint8Array(analyser.frequencyBinCount);
+  if (meterGradH !== h) { meterGrads.clear(); meterGradH = h; }
+  const need = analyser.frequencyBinCount;
+  if (meterBuf.length !== need) meterBuf = new Uint8Array(need);
+  const buf = meterBuf;
   analyser.getByteFrequencyData(buf);
   const bars = 24;
   const bw = w / bars;
@@ -266,9 +276,14 @@ export function drawMeter(canvas, analyser) {
     const v = buf[idx] / 255;
     const bh = Math.max(2, v * h);
     // 电平条：银色系，与整体单色视觉一致
-    const grad = ctx.createLinearGradient(0, h, 0, h - bh);
-    grad.addColorStop(0, 'rgba(255,255,255,.45)');
-    grad.addColorStop(1, 'rgba(255,255,255,1)');
+    const key = Math.round(bh);
+    let grad = meterGrads.get(key);
+    if (!grad) {
+      grad = ctx.createLinearGradient(0, h, 0, h - key);
+      grad.addColorStop(0, 'rgba(255,255,255,.45)');
+      grad.addColorStop(1, 'rgba(255,255,255,1)');
+      meterGrads.set(key, grad);
+    }
     ctx.fillStyle = grad;
     ctx.fillRect(i * bw + 1, h - bh, bw - 2, bh);
   }
