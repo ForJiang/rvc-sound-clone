@@ -52,6 +52,27 @@ RVC 的完整推理链（HuBERT 内容特征 + RMVPE 音高 + 检索索引 + HiF
    - server：WAV base64 → bridge → RVC → 返回 WAV base64
 4. `AudioBuffer` 回放；`encodeWav()` 导出；`makeZip()` 批量打包
 
+### 录音链路上的几个坑
+
+`assets/js/audio.js` 的 `Recorder` 走 `getUserMedia` → `AnalyserNode`（电平）→ `MediaRecorder`
+→ blob → `decode()` → 入队，和上传文件走同一条解码路径。几个容易踩的地方：
+
+- **`getContext()` 必须是 `new (ctxClass())()`，不能写成 `new ctxClass()`**。`ctxClass()`
+  返回的是 `window.AudioContext` 构造函数，而 `new f()` 在 `f` 显式返回一个对象时会改用那个
+  对象当结果——少一层括号拿到的就是构造函数本身，`ctx.resume()` / `createMediaStreamSource()`
+  / `decodeAudioData` 全是 `undefined`，整个音频层静默报废。同一个文件的 `resample()` 写法是对的，
+  可以对照。曾因此挂了整整一个版本：录音点不动、非 WAV 解不了码、播放也不可用。
+- **录音上限 60 秒**，在视图层（`convert.js` 的 `MAX_REC_MS`）而不是录音器里硬编码：
+  到点由 `onLimit` 回调交给上层决定怎么停。计时器显示「已录 / 上限」，最后 10 秒转告红色。
+- **麦克风约束三个一起开**（`echoCancellation` / `noiseSuppression` / `autoGainControl`），
+  进来的人声越干净，后面的特征提取与转换越稳。
+- **预览与结果播放共用一块 waveCanvas**：`player-time` 事件的监听方要按「正在播放的那个
+  播放器」算百分比，另一个可能还没加载音频（`buffer` 为 null）。
+- **电平画布同一时间只留一条 rAF 循环**：`attachMeter()` 会在每次重渲染时被调用，
+  不拦的话每切一次 tab / 每切一次语言就多攒一条并发循环。
+- **启动态要单独拦**：`getUserMedia` 是异步的，授权弹窗期间 `recording` 仍是 `false`，
+  不拦的话连点两下会拿到两条流。
+
 ## 存储
 
 - IndexedDB `rvc-sound-clone/models`：模型文件 Blob（`keyPath: id`）
