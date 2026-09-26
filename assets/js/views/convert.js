@@ -32,7 +32,8 @@ export async function viewConvert(root) {
   const queueBadge = el('span.badge', {}, [], t('convert.stats.queue', { n: state.ui.queue.length }));
   const recorder = new Recorder();
 
-  const timeEl = el('span.rec-time', {}, [], '0:00');
+  const MAX_REC_MS = 60000;   // 最长录 1 分钟：忘了点停止也不会无限录下去、文件不会无限涨
+  const timeEl = el('span.rec-time', {}, [], `0:00/${fmtTime(MAX_REC_MS / 1000)}`);
   const meterCanvas = el('canvas', { height: 18, style: 'width:100%;height:18px;display:block' });
   /* 录音按钮：圆形图标按钮（文字单独放标签，避免文字超出圆形） */
   const recBtn = el('button.rec-btn', {
@@ -155,18 +156,42 @@ export async function viewConvert(root) {
     if (activeTab === 'record') recorder.attachMeter(meterCanvas);
   }
 
+  /* 启动中的标志：getUserMedia 是异步的，期间 recording 仍是 false，
+     不拦的话连点两下会调两次 start（多拿一条流、电平条串台）。 */
+  let recStarting = false;
+
   async function startRecording() {
+    if (recStarting) return;
+    recStarting = true;
+    // 等授权的这一小段时间只说「正在申请」，别写成「正在录制」——麦克风还没拿到
+    recLabel.textContent = t('convert.rec.requesting');
     try {
       await recorder.start({
+        maxMs: MAX_REC_MS,
         onLevel: (v) => { const f = $('#meterFill'); if (f) f.style.width = `${Math.round(v * 100)}%`; },
-        onTick: (ms) => { timeEl.textContent = fmtTime(ms / 1000); },
+        onTick: (ms, max) => {
+          timeEl.textContent = `${fmtTime(ms / 1000)}/${fmtTime((max || MAX_REC_MS) / 1000)}`;
+          // 最后 10 秒转成告红色，提示马上会自动停
+          timeEl.classList.toggle('warn', max ? max - ms <= 10000 : false);
+        },
+        onLimit: (maxMs) => {
+          toast(t('convert.rec.limit', { sec: Math.round(maxMs / 1000) }), { type: 'info' });
+          stopRecording();
+        },
       });
       syncRecBtn();
     } catch (err) {
-      const msg = err.name === 'NotAllowedError' ? t('convert.rec.denied')
-        : err.name === 'NotFoundError' ? t('convert.rec.noDevice')
-          : err.message;
-      toast(msg, { type: 'err', title: t('convert.rec.doing') });
+      // getUserMedia 的失败原因要翻译成人话：不同名字对应不同的处理办法
+      const msg = (err.name === 'NotAllowedError' || err.name === 'SecurityError') ? t('convert.rec.denied')
+        : (err.name === 'NotFoundError' || err.name === 'OverconstrainedError') ? t('convert.rec.noDevice')
+          : err.name === 'NotReadableError' ? t('convert.rec.busy')
+            : (err.message && !/unavailable|already recording/.test(err.message)) ? err.message
+              : t('convert.rec.failed');
+      toast(msg, { type: 'err', title: t('convert.rec.failed') });
+      syncRecBtn();
+      resetRecUI();
+    } finally {
+      recStarting = false;
     }
   }
 
@@ -174,13 +199,22 @@ export async function viewConvert(root) {
     try {
       const { blob } = await recorder.stop();
       syncRecBtn();
-      timeEl.textContent = '0:00';
-      const meter = $('#meterFill'); if (meter) meter.style.width = '0%';
+      resetRecUI();
       await addFiles([new File([blob], `recording-${Date.now()}.webm`, { type: blob.type })]);
     } catch (err) {
       syncRecBtn();
-      toast(err.message, { type: 'err' });
+      resetRecUI();
+      // 时长不够这类要引导用户重录，其余按原始错误提示
+      const msg = err.code === 'too-short' || err.code === 'empty' ? t('convert.rec.empty') : err.message;
+      toast(msg, { type: err.code === 'too-short' || err.code === 'empty' ? 'warn' : 'err' });
     }
+  }
+
+  /** 把计时器和电平条复位（录音结束、失败、被路由切换打断时都要归零）。 */
+  function resetRecUI() {
+    timeEl.textContent = `0:00/${fmtTime(MAX_REC_MS / 1000)}`;
+    timeEl.classList.remove('warn');
+    const meter = $('#meterFill'); if (meter) meter.style.width = '0%';
   }
 
   async function addFiles(files) {
@@ -411,8 +445,12 @@ export async function viewConvert(root) {
     canvas: waveCanvas,
     onEnded: () => updatePlayBtn(false),
   });
+  /* player-time 由两个播放器共用一块画布：预览队列项与播放结果都往这块画布上画。
+     谁在放就按谁的时长算百分比，另者可能还没加载音频（buffer 为 null）。 */
   waveCanvas.addEventListener('player-time', (e) => {
-    playhead.style.left = `${(e.detail / player.buffer.duration) * 100}%`;
+    const src = previewPlayer && previewPlayer.playing ? previewPlayer : player;
+    if (!src || !src.buffer) return;
+    playhead.style.left = `${(e.detail / src.buffer.duration) * 100}%`;
   });
   waveCanvas.addEventListener('click', (e) => {
     if (!player.buffer) return;

@@ -18,18 +18,11 @@ export function isAudioSupported() {
 /** 懒加载单例 AudioContext；resume() 必须在用户手势后调用。 */
 export function getContext() {
   if (!isAudioSupported()) throw new Error('Web Audio API unavailable');
-  if (!getContext._ctx) getContext._ctx = new ctxClass();
-  return getContext._ctx;
-}
-
-export async function listInputs() {
-  try {
-    await navigator.mediaDevices?.getUserMedia({ audio: true }); // 触发权限以拿到设备标签
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    return devices.filter((d) => d.kind === 'audioinput');
-  } catch {
-    return [];
+  if (!getContext._ctx) {
+    const Ctor = ctxClass();
+    getContext._ctx = new Ctor();
   }
+  return getContext._ctx;
 }
 
 /**
@@ -47,25 +40,36 @@ export class Recorder {
     this.startedAt = 0;
     this._onLevel = null;
     this._onTick = null;
+    this._onLimit = null;
+    this.maxMs = 0;          // 0 = 不限时长
+    this._starting = false;  // start() 异步进行中的标志，防连点拿到多条流
+    this._meterCanvas = null;  // attachMeter 已绑定的画布，避免重渲染时累积循环
+    this._meterLoop = 0;
   }
 
   get recording() {
     return !!this.recorder && this.recorder.state === 'recording';
   }
 
-  async start({ deviceId, onLevel, onTick } = {}) {
-    if (this.recording) throw new Error('already recording');
+  async start({ deviceId, onLevel, onTick, onLimit, maxMs } = {}) {
+    // 录音中或正在启动都直接返回：启动是异步的，两次 getContext 之间 recording 还是 false，
+    // 连点两下会拿到两条流，前一条会泄漏、电平条也会串
+    if (this.recording || this._starting) throw new Error('already recording');
     if (!navigator.mediaDevices?.getUserMedia) throw new Error('navigator.mediaDevices unavailable (需要 HTTPS 或 localhost)');
 
-    const constraints = {
-      audio: deviceId
-        ? { deviceId: { exact: deviceId }, echoCancellation: true, noiseSuppression: true }
-        : { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-    };
-    this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+    // 语音输入统一开消回声 + 压噪 + 自动增益：进来的人声越干净，
+    // 后面 RVC 的特征提取与转换越稳。之前只有不带 deviceId 的那半边开了自动增益，不一致。
+    const audio = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+    if (deviceId) audio.deviceId = { exact: deviceId };
+    this._starting = true;
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio });
+    } finally {
+      this._starting = false;
+    }
 
     const ctx = getContext();
-    await ctx.resume();
+    if (typeof ctx.resume === 'function') await ctx.resume();
     this.source = ctx.createMediaStreamSource(this.stream);
     this.analyser = ctx.createAnalyser();
     this.analyser.fftSize = 512;
@@ -81,15 +85,22 @@ export class Recorder {
 
     this._onLevel = onLevel;
     this._onTick = onTick;
+    this._onLimit = onLimit;
+    this.maxMs = maxMs || 0;
     const loop = () => {
       if (!this.recording) return;
+      const elapsed = performance.now() - this.startedAt;
       const buf = new Uint8Array(this.analyser.frequencyBinCount);
       this.analyser.getByteTimeDomainData(buf);
       let sum = 0;
       for (const v of buf) { const x = (v - 128) / 128; sum += x * x; }
       const rms = Math.sqrt(sum / buf.length);
       this._onLevel?.(Math.min(1, rms * 2.6));
-      this._onTick?.(performance.now() - this.startedAt);
+      this._onTick?.(elapsed, this.maxMs);
+      if (this.maxMs && elapsed >= this.maxMs) {
+        this._onLimit?.(this.maxMs);   // 到上限：把真实上限交给上层，提示文案才对得上
+        return;
+      }
       this._raf = requestAnimationFrame(loop);
     };
     this._raf = requestAnimationFrame(loop);
@@ -103,9 +114,15 @@ export class Recorder {
     rec.stop();
     await done;
     cancelAnimationFrame(this._raf);
+    const durationMs = performance.now() - this.startedAt;
     this.cleanup();
     const blob = new Blob(this.chunks, { type: rec.mimeType || 'audio/webm' });
-    if (blob.size < 2048) throw new Error('recorded audio too short');
+    // 时长与体积都要看：时长是用户视角（"至少录 1 秒"），体积兜住某些浏览器产出空 blob
+    if (durationMs < 1000 || blob.size < 2048) {
+      const err = new Error(durationMs < 1000 ? 'recording too short' : 'recording is empty');
+      err.code = durationMs < 1000 ? 'too-short' : 'empty';
+      throw err;
+    }
     return { blob, arrayBuffer: await blob.arrayBuffer() };
   }
 
@@ -117,16 +134,34 @@ export class Recorder {
     this.analyser = null;
     this.recorder = null;
     this._onLevel = null;
+    this._onTick = null;
+    this._onLimit = null;
+    this.maxMs = 0;
+    // 停掉电平画布那条循环，并把最后一帧清掉——不留一段静止的残影
+    if (this._meterCanvas) {
+      const c = this._meterCanvas;
+      c.getContext('2d').clearRect(0, 0, c.width, c.height);
+    }
+    cancelAnimationFrame(this._meterLoop);
+    this._meterLoop = 0;
+    this._meterCanvas = null;
   }
 
-  /** 把 AnalyserNode 绑到 canvas 上画实时电平（停止时自动清空）。 */
+  /**
+   * 把 AnalyserNode 绑到 canvas 上画实时电平（停止时自动清空）。
+   * 同一块画布只允许一条循环：切 tab / 切语言都会重新走到这里，
+   * 不拦的话每重渲染一次就多一条并发的 rAF（实测切 10 次多出 5 条）。
+   */
   attachMeter(canvas) {
+    if (this._meterCanvas === canvas && this._meterLoop) return;
+    cancelAnimationFrame(this._meterLoop);
+    this._meterCanvas = canvas;
     const loop = () => {
       if (!this.analyser) { canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height); return; }
       drawMeter(canvas, this.analyser);
-      requestAnimationFrame(loop);
+      this._meterLoop = requestAnimationFrame(loop);
     };
-    requestAnimationFrame(loop);
+    this._meterLoop = requestAnimationFrame(loop);
   }
 }
 
@@ -346,7 +381,9 @@ export class Player {
     this.source.start(0, offsetSec);
     this.startedAt = performance.now();
     const loop = () => {
-      if (!this.source) return;
+      // 两个播放器共用一块画布，player-time 的监听方随时可能读到 null buffer；
+      // 这里也挡一道，别让监听里的异常把播放头循环打断
+      if (!this.source || !this.buffer) return;
       const t = (this.offset + (performance.now() - this.startedAt) / 1000) % this.buffer.duration;
       this.canvas?.dispatchEvent(new CustomEvent('player-time', { detail: t }));
       this._raf = requestAnimationFrame(loop);
