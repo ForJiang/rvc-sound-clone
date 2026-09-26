@@ -1,6 +1,6 @@
 # RVC Sound Clone
 
-> 借助 RVC（Retrieval-based Voice Conversion）实现的**网页端声音克隆 / 变声工具** —— 纯静态部署，录音、上传、推理、导出全在浏览器里完成，音频不上传。也可切换到本地服务引擎，连接本机官方 RVC 服务获得 GPU 级音质与速度。
+> 借助 RVC（Retrieval-based Voice Conversion）实现的**网页端声音克隆 / 变声工具** —— 录音（最长 1 分钟）或上传音频，浏览器内完成推理、变调与导出，音频不上传。纯静态部署、零构建；对音质和速度有要求时，可切换本地服务引擎，连本机官方 RVC 服务走 GPU。
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-在线-3ddc97.svg)](https://forjiang.github.io/rvc-sound-clone/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6d8cff.svg)](LICENSE)
@@ -226,7 +226,7 @@ rvc-sound-clone/
 
 ## 🇬🇧 English
 
-**RVC Sound Clone** is a fully static web app for RVC-based voice conversion. Record or drop in audio, pick a timbre, and convert — everything runs in the browser with ONNX Runtime Web; nothing is uploaded. For best quality you can instead point it at the official RVC WebUI on your own machine via a tiny CORS bridge.
+**RVC Sound Clone** is a fully static, zero-build web app for RVC-based voice conversion. Record up to a minute of audio or drop in a file, pick a timbre, and convert — inference, pitch shifting and export all run in the browser with ONNX Runtime Web; nothing is uploaded. For best quality or speed you can instead point it at the official RVC WebUI on your own machine via a tiny CORS bridge.
 
 ```bash
 git clone https://github.com/ForJiang/rvc-sound-clone.git

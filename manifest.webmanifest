@@ -1,7 +1,7 @@
 {
   "name": "RVC Sound Clone",
   "short_name": "RVC Clone",
-  "description": "基于 RVC 的网页端声音克隆工具",
+  "description": "基于 RVC 的网页端声音克隆工具：浏览器内录音或上传，音频不上传",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
