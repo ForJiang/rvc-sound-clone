@@ -7,26 +7,26 @@
 [![No Build](https://img.shields.io/badge/build-none-success.svg)](index.html)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-a86dff.svg)](https://github.com/ForJiang/rvc-sound-clone/pulls)
 
-English intro at the bottom → [English](#-english)
+English intro at the bottom → [English](#english)
 
 ---
 
-## ✨ 功能特性
+## 功能特性
 
 | | |
 | --- | --- |
-| 🎙️ **零安装录音** | 浏览器内直接录音，实时电平条与计时器，最长 1 分钟自动停止，建议录 5–30 秒即可开工 |
-| 📂 **批量处理** | 拖入任意多个音频文件排队转换，结果可打包成 ZIP 一次下载 |
-| 🧠 **双引擎** | **浏览器引擎**：ONNX Runtime Web 在页内跑完整流水线；**本地服务引擎**：连接本机官方 RVC WebUI |
-| 🎚️ **完整参数** | 变调、索引强度、清音保护、音量包络混合、中值滤波半径，全部可调节 |
-| ⚡ **快捷操作** | 参数预设一键套用、队列原声试听、键盘快捷键（R 录音 / C 转换 / 空格播放） |
-| 📦 **自带模型库** | 基础模型一键下载，自定义 `.onnx` / `.pth` + `.index` 拖拽导入 |
-| 🎨 **RGB 波场背景** | 深色玻璃面板 + WebGL 正弦波流动背景，玻璃面板与控件语言对齐 [Image Metadata Cleaner](https://forjiang.github.io/image-metadata-cleaner/) |
-| 🌐 **中英双语** | 跟随系统语言，可手动切换，移动端自适应 |
-| 🔒 **隐私优先** | 音频与模型只存在你自己的 IndexedDB，没有任何服务端副本 |
-| 🚀 **真正静态** | 无构建、无依赖安装，GitHub Pages 直接发布 |
+| **零安装录音** | 浏览器内直接录音，实时电平条与计时器，最长 1 分钟自动停止，建议录 5–30 秒即可开工 |
+| **批量处理** | 拖入任意多个音频文件排队转换，结果可打包成 ZIP 一次下载 |
+| **双引擎** | **浏览器引擎**：ONNX Runtime Web 在页内跑完整流水线；**本地服务引擎**：连接本机官方 RVC WebUI |
+| **完整参数** | 变调、索引强度、清音保护、音量包络混合、中值滤波半径，全部可调节 |
+| **快捷操作** | 参数预设一键套用、队列原声试听、键盘快捷键（R 录音 / C 转换 / 空格播放） |
+| **自带模型库** | 基础模型一键下载，自定义 `.onnx` / `.pth` + `.index` 拖拽导入 |
+| **RGB 波场背景** | 深色玻璃面板 + WebGL 正弦波流动背景，玻璃面板与控件语言对齐 [Image Metadata Cleaner](https://forjiang.github.io/image-metadata-cleaner/) |
+| **中英双语** | 跟随系统语言，可手动切换，移动端自适应 |
+| **隐私优先** | 音频与模型只存在你自己的 IndexedDB，没有任何服务端副本 |
+| **真正静态** | 无构建、无依赖安装，GitHub Pages 直接发布 |
 
-## 🖼️ 界面预览
+## 界面预览
 
 ![转换页](docs/screenshot-convert.png)
 
@@ -43,7 +43,7 @@ English intro at the bottom → [English](#-english)
 0.05s 起步、每块错 0.05s；`prefers-reduced-motion` 下自动关闭，内容直接呈现。
 站点图标（favicon）以 base64 内联在 HTML 里，规避浏览器 favicon 缓存导致标签页不更新；文件形式的多尺寸图标由 `tools/make_icons.py` 从 `favicon.svg` 的几何重新生成（纯标准库，圆角矩形 SDF 光栅化，不依赖 PIL）。图标底是 `rx=14` 圆角 + 左上 `#2a2c33` 到右下 `#101114` 的斜向渐变，与 image-metadata-cleaner 同一套——纯深色直角块压在深色标签栏上看不出圆角，略亮的渐变底才让轮廓在小尺寸下依然分明。`apple-touch-icon` 是唯一的例外，保持直角整幅不透明：iOS 会自己套圆角 mask，预先裁圆的源图会被二次裁切，透明角还会透出桌面壁纸。
 
-## 🧩 它是怎么工作的
+## 它是怎么工作的
 
 ```
 浏览器（纯静态站点）
@@ -65,7 +65,7 @@ English intro at the bottom → [English](#-english)
 
 设计细节见 [docs/architecture.md](docs/architecture.md)。
 
-## 🚀 快速开始
+## 快速开始
 
 ### 在线使用
 
@@ -97,7 +97,7 @@ python3 server/bridge.py --mode echo
 
 然后在网页「设置 → 推理引擎 → 本地服务引擎」填 `http://127.0.0.1:7865`，点「测试连接」。
 
-## 📖 使用流程
+## 使用流程
 
 1. **准备原始音频** —— 麦克风录一段，或拖入 wav / mp3 / flac 等文件。
 2. **选择目标音色** —— 模型库里下载基础模型，再导入或下载一个音色模型。
@@ -116,7 +116,7 @@ python3 server/bridge.py --mode echo
 
 完整说明：[docs/usage.md](docs/usage.md) ・ 疑难排查：[docs/faq.md](docs/faq.md)
 
-## 🎭 模型从哪来
+## 模型从哪来
 
 - **基础模型**（HuBERT / RMVPE）：网页「模型库 → 基础模型」一键下载，来自 RVC 官方预处理模型。
 - **音色模型**：仓库不托管任何人声音色。你可以导入社区公开模型，或用官方 [Retrieval-based-Voice-Conversion-WebUI](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI) 自己训练（10–20 分钟干净干声即可起步）。
@@ -134,7 +134,7 @@ python3 tools/export_onnx.py --hubert hubert_base.pt --f0 rmvpe.pt --out ./base-
 
 转换脚本与前端 IO 契约的对应关系见 [docs/model-conversion.md](docs/model-conversion.md)。
 
-## 🗂 目录结构
+## 目录结构
 
 ```
 rvc-sound-clone/
@@ -166,7 +166,7 @@ rvc-sound-clone/
 └─ docs/                   用法、模型转换、FAQ、架构、部署
 ```
 
-## 🗺️ 路线图
+## 路线图
 
 - [ ] 实时变声（AudioWorklet + 流式推理）
 - [ ] 浏览器引擎解析 FAISS `.index`（支持检索索引）
@@ -175,7 +175,7 @@ rvc-sound-clone/
 - [ ] 离线完全可用：内置 ONNX Runtime 与 wasm，去掉 CDN 依赖
 - [ ] 自定义 UI 配色与布局密度
 
-## 🔄 更新与缓存
+## 更新与缓存
 
 站点是纯静态部署，浏览器会缓存 JS/CSS 模块。为了避免改了页面你却看不到：
 
@@ -183,7 +183,7 @@ rvc-sound-clone/
 - 版本号对应仓库 commit：`assets/js/app.js` 里的 `BUILD` 常量与 `assets/version.json` 的 `version` 字段，发版时同步更新；
 - 机器人轮询失败（断网等）会静默跳过，不影响使用。
 
-## ❓ FAQ
+## FAQ
 
 挑几个最常被问到的，完整版在 [docs/faq.md](docs/faq.md)：
 
@@ -199,7 +199,7 @@ rvc-sound-clone/
 **Q：转换很慢怎么办？**
 把音频缩短到 20 秒以内，或切到本地服务引擎（有显卡会快很多）。
 
-## ⚖️ 法律与伦理声明
+## 法律与伦理声明
 
 声音克隆涉及个人声纹与人格权益。请务必：
 
@@ -209,7 +209,7 @@ rvc-sound-clone/
 
 使用者需自行承担相应法律责任，本项目作者不对任何滥用行为负责。
 
-## 🤝 贡献
+## 贡献
 
 欢迎 issue 和 PR。提 PR 前建议：
 
@@ -218,13 +218,13 @@ rvc-sound-clone/
 3. 新增文案同时补 `zh` 与 `en` 两份；
 4. 改动 IO 契约时同步更新 `docs/model-conversion.md` 与 `assets/js/engine-onnx.js`。
 
-## 📄 许可证
+## 许可证
 
 代码以 [MIT](LICENSE) 发布。集成的上游项目（RVC WebUI、ONNX Runtime Web、基础模型）遵循各自许可，使用前请自行确认。
 
 ---
 
-## 🇬🇧 English
+## English
 
 **RVC Sound Clone** is a fully static, zero-build web app for RVC-based voice conversion. Record up to a minute of audio or drop in a file, pick a timbre, and convert — inference, pitch shifting and export all run in the browser with ONNX Runtime Web; nothing is uploaded. For best quality or speed you can instead point it at the official RVC WebUI on your own machine via a tiny CORS bridge.
 
