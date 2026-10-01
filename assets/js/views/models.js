@@ -6,7 +6,7 @@ import { t, onLangChange } from '../i18n.js';
 import { el, card, btn, notice, toast, formatBytes, confirmDialog } from '../ui.js';
 import { catalog } from '../catalog.js';
 import { getModel, putModel, deleteModel, clearModels, modelCacheBytes, storageEstimate } from '../store.js';
-import { state, refreshEngineChip } from '../state.js';
+import { state } from '../state.js';
 
 const CACHE = 'rvc-model-cache-v1';
 
@@ -338,5 +338,3 @@ async function streamToBlob(res, onProgress, total) {
   }
   return new Blob(chunks);
 }
-
-export { CACHE };

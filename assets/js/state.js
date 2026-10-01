@@ -47,13 +47,6 @@ export function getEngine() {
   return new OnnxEngine();
 }
 
-export function currentEngineLabel() {
-  const s = state.settings;
-  if (!s) return t('engine.unknown');
-  if (s.engine === 'server') return `${t('engine.server')} · ${s.serverUrl}`;
-  return t('engine.onnx');
-}
-
 /** 顶栏引擎状态灯；记住最后一次 detail，语言切换后能原样重绘。 */
 export async function refreshEngineChip(detail) {
   if (detail) lastChipDetail = detail;

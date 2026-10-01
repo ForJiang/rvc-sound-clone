@@ -4,20 +4,26 @@
 
 import { initI18n, t, onLangChange, setLang, getLang, applyI18n } from './i18n.js';
 import { $, $$, toast } from './ui.js';
-import { initState, state, refreshEngineChip } from './state.js';
+import { initState, refreshEngineChip } from './state.js';
 import { storageStatus } from './store.js';
 import { startShaderBackground } from './webgl-bg.js';
-import { viewConvert } from './views/convert.js';
-import { viewModels } from './views/models.js';
-import { viewSettings } from './views/settings.js';
-import { viewHelp } from './views/help.js';
 
+/* 视图按需加载：四个视图 + 它们拖进来的 catalog.js / engine 加起来近 80KB，
+   而同一时刻只用得到一个，全部塞进首屏纯属浪费。hash 路由本来就是异步的
+   （renderRoute 里 await），所以改成动态 import 即可，首屏只拉当前路由那一份，
+   其余等用户真点到再取（取过一次浏览器就缓存了，之后再切是瞬时的）。 */
 const ROUTES = {
-  '/convert': viewConvert,
-  '/models': viewModels,
-  '/settings': viewSettings,
-  '/help': viewHelp,
+  '/convert': () => import('./views/convert.js').then((m) => m.viewConvert),
+  '/models': () => import('./views/models.js').then((m) => m.viewModels),
+  '/settings': () => import('./views/settings.js').then((m) => m.viewSettings),
+  '/help': () => import('./views/help.js').then((m) => m.viewHelp),
 };
+
+/** 取某个路由的视图；路由不存在时回落到转换页。 */
+function loadView(key) {
+  const loader = ROUTES[key] || ROUTES['/convert'];
+  return loader();
+}
 
 /* 参与入场的「内容块」。四个视图的挂载结构差别很大（help 整页裹在 .doc 里、
    convert 多套一层 .grid、models 要再深一层），按 .view > * 猜层级只能命中外壳，
@@ -118,7 +124,6 @@ function parseRoute() {
 
 async function renderRoute() {
   const key = parseRoute();
-  const view = ROUTES[key];
   const root = $('#view');
   try {
     currentCleanup?.();
@@ -130,6 +135,7 @@ async function renderRoute() {
   $$('.sidebar a').forEach((a) => a.classList.toggle('active', a.dataset.route === key.slice(1)));
   document.title = `${routeTitle(key)} · RVC Sound Clone`;
   try {
+    const view = await loadView(key);
     const handle = await view(root);
     currentCleanup = handle?.destroy || null;
     staggerEnter(root);   // 视图渲染完再排队，保证拿到最终的 DOM 顺序
@@ -194,6 +200,11 @@ async function boot() {
   if (bootText) bootText.textContent = t('common.loading');
 
   wireTopbar();
+
+  // 首屏路由的视图模块现在就并行去拉，别等 initState / 状态灯跑完才起步——
+  // 那两步是异步的，够把这一次下载盖掉。这里故意不 await，只是预热，
+  // renderRoute() 里再 import 同一个模块会命中模块缓存，不再发请求。
+  loadView(parseRoute()).catch((err) => console.error('[view]', err));
 
   await initState();
   await refreshEngineChip();

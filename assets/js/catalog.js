@@ -2,7 +2,7 @@
  * 模型目录：合并 models/manifest.json 与 IndexedDB 中已导入/已下载的模型。
  */
 
-import { getModel, listModels } from './store.js';
+import { listModels } from './store.js';
 
 const FALLBACK = { base: [], voices: [], sources: [] };
 
@@ -65,11 +65,4 @@ export async function catalog() {
     base: entries.filter((e) => e.kind === 'base'),
     sources: manifest.sources || [],
   };
-}
-
-/** 读取并校验本地已下载模型的 Blob。 */
-export async function loadModelFiles(id) {
-  const rec = await getModel(id);
-  if (!rec) throw new Error(`model not found locally: ${id}`);
-  return rec;
 }

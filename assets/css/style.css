@@ -304,7 +304,6 @@ p.lead { margin: 0; color: var(--ink-dim); text-shadow: var(--t-shadow-sm); }
 
 .grid { display: grid; gap: 18px; }
 .grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid.convert { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); align-items: stretch; }
 /* 第一张卡与右侧参数卡等高：内部改为纵向 flex，队列区吃掉剩余高度，
    否则卡片下方会空出一块，页面右下角显得稀 */
@@ -330,12 +329,9 @@ p.lead { margin: 0; color: var(--ink-dim); text-shadow: var(--t-shadow-sm); }
 
 .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .row.tight { gap: 6px; }
-.spacer { flex: 1; }
 .muted { color: var(--ink-dim); }
 .faint { color: var(--ink-faint); font-size: 12px; }
 .mono { font-family: var(--mono); font-size: 12px; }
-.center { text-align: center; }
-.nowrap { white-space: nowrap; }
 .hidden { display: none !important; }
 
 /* ---------------- 按钮 ---------------- */
@@ -796,8 +792,6 @@ table.data td.mono, table.data th.mono { font-variant-numeric: tabular-nums; }
   color: var(--ink-dim);
 }
 .file-detail .chip.ok { color: #8ff0c6; border-color: rgba(61,220,151,0.35); }
-.row-click { cursor: pointer; }
-.row-click:hover { background: rgba(255,255,255,0.06); }
 
 /* ---------------- 帮助页步骤条 ---------------- */
 .steps-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 6px 0 8px; }
@@ -857,7 +851,6 @@ table.data td.mono, table.data th.mono { font-variant-numeric: tabular-nums; }
 /* ---------------- 响应式 ---------------- */
 @media (max-width: 1080px) {
   .grid.convert { grid-template-columns: minmax(0, 1fr); }
-  .grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .steps-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 860px) {
@@ -866,7 +859,7 @@ table.data td.mono, table.data th.mono { font-variant-numeric: tabular-nums; }
   .sidebar a { flex: none; }
   .sidebar-foot { display: none; }
   .brand-text small { display: none; }
-  .grid.cols-2, .grid.cols-3 { grid-template-columns: minmax(0, 1fr); }
+  .grid.cols-2 { grid-template-columns: minmax(0, 1fr); }
   .engine-chip { display: none; }
   .topbar { padding: 0 14px; }
   /* 移动端把面板模糊从 16px 降到 6px：全屏 shader + 高模糊在手机 GPU 上很贵，

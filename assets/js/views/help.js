@@ -223,5 +223,3 @@ export async function viewHelp(root) {
   const stop = onLangChange(render);
   return { destroy: () => stop() };
 }
-
-export { SECTIONS };

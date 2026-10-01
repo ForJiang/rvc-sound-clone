@@ -372,5 +372,3 @@ async function floatToAudioBuffer(pcm, fromRate, toRate) {
   if (toRate !== fromRate) buffer = await resample(buffer, toRate);
   return buffer;
 }
-
-export { fillZeros };

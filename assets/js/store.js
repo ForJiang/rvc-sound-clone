@@ -19,10 +19,6 @@ const memory = {
   warned: false,
 };
 
-export function isDegraded() {
-  return dbPromise === null;
-}
-
 /** 供启动时探测：存储是否可用、不可用时的原因。 */
 export async function storageStatus() {
   try {
@@ -202,5 +198,3 @@ export async function resetSettings() {
 function mergeSettings(saved) {
   return { ...DEFAULT_SETTINGS, ...(saved || {}), params: { ...DEFAULT_SETTINGS.params, ...(saved?.params || {}) } };
 }
-
-export { DEFAULT_SETTINGS };

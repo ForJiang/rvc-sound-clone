@@ -3,8 +3,8 @@
  */
 
 import { t, onLangChange, setLang, getLang } from '../i18n.js';
-import { el, card, btn, notice, toast, copyText, downloadBlob, switchBox } from '../ui.js';
-import { state, getEngine, persistSettings, refreshEngineChip } from '../state.js';
+import { el, card, btn, notice, toast, downloadBlob } from '../ui.js';
+import { state, persistSettings, refreshEngineChip } from '../state.js';
 import { resetSettings, modelCacheBytes, clearModels } from '../store.js';
 import { loadOrt } from '../engine-onnx.js';
 
