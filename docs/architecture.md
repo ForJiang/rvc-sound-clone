@@ -14,7 +14,7 @@
 │      ├─ catalog.js        models/manifest.json + 本地索引合并           │
 │      ├─ engine-onnx.js    ONNX Runtime Web 推理流水线                   │
 │      ├─ engine-server.js  本地服务 HTTP 客户端                          │
-│      └─ views/            convert / models / settings / help            │
+│      └─ views/            convert / models / settings / help（按需加载） │
 │                                                                        │
 │  IndexedDB: 模型权重 Blob、用户设置                                     │
 │  Cache/CDN : onnxruntime-web、fflate（解压 zip 包）                     │
@@ -42,6 +42,29 @@ RVC 的完整推理链（HuBERT 内容特征 + RMVPE 音高 + 检索索引 + HiF
 - **本地服务引擎**：复用官方实现，音质与速度最好，适合重度使用。
 
 两套引擎实现同一个 `convert()` 接口，视图层无感知。
+
+## 按需加载视图
+
+四个视图（convert / models / settings / help）加上它们拖进来的 `catalog.js`，合计约 60KB，
+而同一时刻只用得到一个。所以 `app.js` 的 `ROUTES` 存的是 `() => import(...)` 而不是直接引用：
+
+```js
+const ROUTES = {
+  '/convert': () => import('./views/convert.js').then((m) => m.viewConvert),
+  // ...
+};
+```
+
+两点容易踩的地方：
+
+- **首屏路由要在 `boot()` 里就并行预热**（`loadView(parseRoute())`，故意不 await）。
+  `initState()` / `refreshEngineChip()` 那两步是异步的，刚好把这次下载盖掉；
+  之后 `renderRoute()` 再 import 同一个模块会命中模块缓存，不再发请求。
+- **别改回全量 import**。首屏实测 18 请求 / 196.6KB，改按需后 15 请求 / 161.1KB；
+  用户没点过的路由那些字节纯属白下载。
+
+`engine-onnx.js` / `engine-server.js` 目前仍是随 `state.js` 进来首屏的。要延迟它们得把
+`getEngine()` 改成异步并波及视图层，收益（约 18KB）够不上这个改动，先留着。
 
 ## 数据流
 

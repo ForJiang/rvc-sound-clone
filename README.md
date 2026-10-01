@@ -24,7 +24,7 @@ English intro at the bottom → [English](#english)
 | **RGB 波场背景** | 深色玻璃面板 + WebGL 正弦波流动背景，玻璃面板与控件语言对齐 [Image Metadata Cleaner](https://forjiang.github.io/image-metadata-cleaner/) |
 | **中英双语** | 跟随系统语言，可手动切换，移动端自适应 |
 | **隐私优先** | 音频与模型只存在你自己的 IndexedDB，没有任何服务端副本 |
-| **真正静态** | 无构建、无依赖安装，GitHub Pages 直接发布 |
+| **真正静态** | 无构建、无依赖安装，GitHub Pages 直接发布；四个视图按路由按需加载，首屏只拉当前那一份 |
 
 ## 界面预览
 
@@ -64,6 +64,8 @@ English intro at the bottom → [English](#english)
 | 隐私 | 完全本地 | 请求只发到 `127.0.0.1` |
 
 设计细节见 [docs/architecture.md](docs/architecture.md)。
+
+加载策略：视图按路由按需 `import()`，首屏只下载当前那一份，其余等用户真点到再取（取过一次浏览器就缓存，之后再切是瞬时的）；首屏路由的模块在启动时就开始并行预热。
 
 ## 快速开始
 
