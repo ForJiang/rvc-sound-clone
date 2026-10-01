@@ -153,7 +153,6 @@ export async function viewSettings(root) {
       btn(t('settings.data.reset'), {
         size: 'sm', variant: 'danger',
         onClick: async () => {
-          await resetSettings();
           state.settings = await resetSettings();
           toast(t('settings.reset.ok'), { type: 'ok' });
           renderAll();

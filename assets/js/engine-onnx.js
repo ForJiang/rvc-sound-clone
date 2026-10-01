@@ -100,33 +100,12 @@ function medianFilter1d(src, radius) {
 
 /** Hz -> RVC 的 1..255 对数音高刻度；清音为 0。 */
 const F0_MIN = 32.7;      // C1
-const F0_MAX = 1975.5;    // B6
 const F0_BINS = 256;
 
-export function freqToBin(hz) {
+function freqToBin(hz) {
   if (!hz || hz <= 0) return 0;
   const v = 1127 * Math.log2(Math.max(hz, F0_MIN) / F0_MIN);
   return Math.max(1, Math.min(F0_BINS - 1, Math.round(v)));
-}
-
-/** 线性插值补齐零值（清音段音高）。 */
-function fillZeros(f0) {
-  const n = f0.length;
-  const out = Float32Array.from(f0);
-  let last = 0;
-  for (let i = 0; i < n; i++) {
-    if (out[i] > 0) { last = out[i]; continue; }
-    if (last > 0) out[i] = last;
-  }
-  // 开头的清音用第一个有效值回填
-  let first = 0;
-  for (let i = 0; i < n; i++) if (out[i] > 0) { first = out[i]; break; }
-  for (let i = 0; i < n; i++) if (f0[i] <= 0 && first > 0) out[i] = first;
-  return out;
-}
-
-function tensorFrom(ort, data, shape, type = 'float32') {
-  return new ort.Tensor(type, data, shape);
 }
 
 /** 交叠相加的交叉淡化。 */

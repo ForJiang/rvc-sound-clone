@@ -110,14 +110,14 @@ function blobToBase64(blob) {
   });
 }
 
-export function base64ToBytes(b64) {
+function base64ToBytes(b64) {
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return bytes;
 }
 
-export async function decodePcm(bytes) {
+async function decodePcm(bytes) {
   // 复用 audio.js 的解码器：WAV 走纯 JS 解析，不依赖浏览器解码能力
   const { decode } = await import('./audio.js');
   return decode(bytes.buffer.slice(0));

@@ -433,23 +433,6 @@ input[type="range"]::-webkit-slider-thumb {
 input[type="range"]::-moz-range-track { height: 4px; border-radius: 99px; background: rgba(255, 255, 255, 0.22); }
 input[type="range"]::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%; background: #f4f5f7; border: none; }
 
-.switch { display: inline-flex; align-items: center; gap: 9px; cursor: pointer; user-select: none; }
-.switch input { position: absolute; opacity: 0; pointer-events: none; }
-.switch .track {
-  width: 38px; height: 21px; border-radius: 99px;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid var(--line);
-  position: relative; transition: 0.18s ease; flex: none;
-}
-.switch .track::after {
-  content: ""; position: absolute; top: 2px; left: 2px;
-  width: 15px; height: 15px; border-radius: 50%;
-  background: rgba(255, 255, 255, 0.75);
-  transition: 0.18s ease;
-}
-.switch input:checked + .track { background: #f2f3f6; border-color: transparent; }
-.switch input:checked + .track::after { left: 20px; background: #0a0a0c; }
-
 /* 滑块行 */
 .slider-row { display: grid; gap: 2px; }
 .slider-head { display: flex; align-items: baseline; gap: 8px; }

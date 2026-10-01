@@ -11,7 +11,7 @@ function ctxClass() {
   return window.AudioContext || window.webkitAudioContext;
 }
 
-export function isAudioSupported() {
+function isAudioSupported() {
   return typeof ctxClass() === 'function';
 }
 
@@ -158,9 +158,8 @@ export class Recorder {
   }
 }
 
-/** 解码任意浏览器支持的音频为 AudioBuffer。 */
 /** 判断字节流是否是 WAV（RIFF/WAVE 头）。 */
-export function isWav(bytes) {
+function isWav(bytes) {
   if (bytes.length < 12) return false;
   const tag = (o) => String.fromCharCode(bytes[o], bytes[o + 1], bytes[o + 2], bytes[o + 3]);
   return tag(0) === 'RIFF' && tag(8) === 'WAVE';
@@ -171,7 +170,7 @@ export function isWav(bytes) {
  * 这样即使环境的 Web Audio 解码能力不全（部分内嵌浏览器、隐私模式），WAV 依然可用。
  * @returns {{sampleRate:number, channels:Float32Array[]}}
  */
-export function parseWav(bytes) {
+function parseWav(bytes) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const tag = (o) => String.fromCharCode(bytes[o], bytes[o + 1], bytes[o + 2], bytes[o + 3]);
 
@@ -251,7 +250,7 @@ export async function decode(arrayBuffer) {
  * 把裸声道数据包成 AudioBuffer；AudioContext 不可用时退化为同形态对象，
  * 仍可用于波形显示与 WAV 导出（仅播放不可用）。
  */
-export function toAudioBuffer(sampleRate, channels) {
+function toAudioBuffer(sampleRate, channels) {
   const ctx = isAudioSupported() ? getContext() : null;
   if (ctx && typeof ctx.createBuffer === 'function') {
     const buf = ctx.createBuffer(channels.length, channels[0].length, sampleRate);

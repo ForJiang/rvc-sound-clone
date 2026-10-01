@@ -8,7 +8,7 @@ const FALLBACK = { base: [], voices: [], sources: [] };
 
 let manifestPromise = null;
 
-export function loadManifest() {
+function loadManifest() {
   if (manifestPromise) return manifestPromise;
   manifestPromise = fetch('models/manifest.json', { cache: 'no-cache' })
     .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))

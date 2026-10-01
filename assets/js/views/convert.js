@@ -5,7 +5,7 @@
 import { t, onLangChange } from '../i18n.js';
 import {
   $, el, card, btn, slider, notice, toast, downloadBlob,
-  makeZip, drawWave, formatTime, formatBytes, formatTime as fmtTime,
+  makeZip, drawWave, formatBytes, formatTime as fmtTime,
 } from '../ui.js';
 import {
   Recorder, decode, encodeWav, resample, toMono, Player, SAMPLE_RATE_16K,

@@ -141,15 +141,6 @@ export function slider({ label, hint, min, max, step, value, unit = '', format, 
   ]);
 }
 
-export function switchBox(label, checked, onChange) {
-  const input = el('input', {
-    type: 'checkbox',
-    onchange: () => onChange(input.checked),
-  });
-  input.checked = !!checked;
-  return el('label.switch', {}, [input, el('span.track'), el('span', {}, [], label)]);
-}
-
 export function btn(label, { variant = '', size = '', onClick, disabled, title, type = 'button', attrs = {} } = {}) {
   return el(`button.btn${variant ? '.' + variant : ''}${size ? '.' + size : ''}`, {
     type, title, disabled, onclick: onClick, ...attrs,

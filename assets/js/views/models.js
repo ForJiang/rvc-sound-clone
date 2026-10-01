@@ -8,11 +8,8 @@ import { catalog } from '../catalog.js';
 import { getModel, putModel, deleteModel, clearModels, modelCacheBytes, storageEstimate } from '../store.js';
 import { state } from '../state.js';
 
-const CACHE = 'rvc-model-cache-v1';
-
 export async function viewModels(root) {
   const { entries, sources } = await catalog();
-  const localIds = new Set(entries.filter((e) => e.downloaded).map((e) => e.id));
 
   const downloading = new Map();
   let tab = 'base';
@@ -77,7 +74,7 @@ export async function viewModels(root) {
   ]);
 
   // 不标 .panel：里面的来源卡自己就是 .card，逐个上浮比整块一起动更贴合「每张卡片都入场」
-  const baseSources = el('div.grid.cols-2', {}, (sources.length ? sources : []).map((s) =>
+  const baseSources = el('div.grid.cols-2', {}, sources.map((s) =>
     el('div.card', { style: { padding: '12px 14px' } }, [
       el('strong', {}, [], s.name),
       el("p.faint", {}, [], s.desc || ""),
@@ -212,7 +209,6 @@ export async function viewModels(root) {
     await deleteModel(m.id);
     m.downloaded = false;
     m.files = (m.files || []).map((f) => ({ ...f, downloaded: false }));
-    localIds.delete(m.id);
     toast(t('models.delete.ok', { name: m.name }), { type: 'ok' });
     renderTable();
     refreshCache();
@@ -223,7 +219,7 @@ export async function viewModels(root) {
     await clearModels();
     toast(t('models.cache.cleared', { bytes: formatBytes(bytes) }), { type: 'ok' });
     for (const m of entries) {
-      m.downloaded = m.source === 'import' ? false : false;
+      m.downloaded = false;
       m.files = (m.files || []).map((f) => ({ ...f, downloaded: false }));
     }
     renderTable();
