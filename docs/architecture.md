@@ -171,6 +171,13 @@ R/G/B 通道，横坐标按到屏幕中心的距离做 distortion 扭曲，`0.05
 主 favicon 以 base64 内联在 `index.html` 里：浏览器把 favicon 按页面 URL 缓存在自己的
 favicon 数据库中，只换文件 URL 甚至改 `?v=` 都不重取，内联可保证已打开的标签页也能拿到新图。
 
+### 标签页标题固定英文
+
+`document.title` 由 `app.js` 的 `routeTitle()` 拼成，四个路由名是硬编码的英文
+（Convert / Models / Settings / Help），不随界面语言切换。标签栏很窄，中英混排容易被
+截断，也不方便在多标签之间辨认；界面语言照旧只影响页面内容。`index.html` 与
+`404.html` 里的静态 `<title>` 同样只用英文——JS 跑起来前那一瞬间显示的就是它。
+
 ## 部署
 
 纯静态。默认走 GitHub Pages 的「分支部署」：push 到 `main` 即发布仓库根目录，无需构建。

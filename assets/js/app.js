@@ -179,11 +179,13 @@ function wireTopbar() {
   });
 }
 
+/* 标签页标题固定用英文：标签栏很窄，中英混排容易被截断，也不方便在多标签间辨认。
+   界面语言照旧只影响页面内容，标题不跟着切。 */
 function routeTitle(key) {
-  return key === '/models' ? t('nav.models')
-    : key === '/settings' ? t('nav.settings')
-      : key === '/help' ? t('nav.help')
-        : t('nav.convert');
+  return key === '/models' ? 'Models'
+    : key === '/settings' ? 'Settings'
+      : key === '/help' ? 'Help'
+        : 'Convert';
 }
 
 /* ----------------------------- 启动 ----------------------------- */
