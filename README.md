@@ -1,6 +1,6 @@
 # RVC Sound Clone
 
-> 借助 RVC（Retrieval-based Voice Conversion）实现的**网页端声音克隆 / 变声工具** —— 录音（最长 1 分钟）或上传音频，浏览器内完成推理、变调与导出，音频不上传。纯静态部署、零构建；对音质和速度有要求时，可切换本地服务引擎，连本机官方 RVC 服务走 GPU。
+> 借助 RVC（Retrieval-based Voice Conversion）实现的**网页端声音克隆 / 变声工具** —— 录音（最长 1 分钟）或上传音频，浏览器内完成推理、变调与导出，音频不上传。深色玻璃面板 + 自研 WebGL RGB 正弦波流动背景，四个视图按路由按需加载；纯静态部署、零构建。对音质和速度有要求时，可切换本地服务引擎，连本机官方 RVC 服务走 GPU。
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-在线-3ddc97.svg)](https://forjiang.github.io/rvc-sound-clone/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6d8cff.svg)](LICENSE)
@@ -19,7 +19,7 @@ English intro at the bottom → [English](#english)
 | **批量处理** | 拖入任意多个音频文件排队转换，结果可打包成 ZIP 一次下载 |
 | **双引擎** | **浏览器引擎**：ONNX Runtime Web 在页内跑完整流水线；**本地服务引擎**：连接本机官方 RVC WebUI |
 | **完整参数** | 变调、索引强度、清音保护、音量包络混合、中值滤波半径，全部可调节 |
-| **快捷操作** | 参数预设一键套用、队列原声试听、键盘快捷键（R 录音 / C 转换 / 空格播放） |
+| **快捷操作** | 参数预设一键套用、队列原声试听、键盘快捷键（R 录音 / C 转换 / 空格播放 / Backspace 清空队列） |
 | **自带模型库** | 基础模型一键下载，自定义 `.onnx` / `.pth` + `.index` 拖拽导入 |
 | **RGB 波场背景** | 深色玻璃面板 + WebGL 正弦波流动背景，玻璃面板与控件语言对齐 [Image Metadata Cleaner](https://forjiang.github.io/image-metadata-cleaner/) |
 | **中英双语** | 跟随系统语言，可手动切换，移动端自适应 |
@@ -42,6 +42,7 @@ English intro at the bottom → [English](#english)
 每个视图的卡片都有上浮入场（`opacity` 0→1 + `translateY(30px)`→0，0.5s），按页面里的 DOM 顺序错峰浮现，
 0.05s 起步、每块错 0.05s；`prefers-reduced-motion` 下自动关闭，内容直接呈现。
 站点图标（favicon）以 base64 内联在 HTML 里，规避浏览器 favicon 缓存导致标签页不更新；文件形式的多尺寸图标由 `tools/make_icons.py` 从 `favicon.svg` 的几何重新生成（纯标准库，圆角矩形 SDF 光栅化，不依赖 PIL）。图标底是 `rx=14` 圆角 + 左上 `#2a2c33` 到右下 `#101114` 的斜向渐变，与 image-metadata-cleaner 同一套——纯深色直角块压在深色标签栏上看不出圆角，略亮的渐变底才让轮廓在小尺寸下依然分明。`apple-touch-icon` 是唯一的例外，保持直角整幅不透明：iOS 会自己套圆角 mask，预先裁圆的源图会被二次裁切，透明角还会透出桌面壁纸。
+标签页标题固定用英文：`app.js` 的 `routeTitle()` 把四个路由名硬编码成 Convert / Models / Settings / Help，不随界面语言切换。标签栏很窄，中英混排容易被截断，也不方便在多标签之间辨认；界面语言照旧只影响页面内容。`index.html` 与 `404.html` 里的静态 `<title>` 同样只用英文——JS 跑起来前那一瞬间显示的就是它。只出现在分享卡片和搜索引擎里的 `og:title` 与 `meta description` 保持中文，它们不参与标签页显示。
 
 ## 它是怎么工作的
 
@@ -101,7 +102,7 @@ python3 server/bridge.py --mode echo
 
 ## 使用流程
 
-1. **准备原始音频** —— 麦克风录一段，或拖入 wav / mp3 / flac 等文件。
+1. **准备原始音频** —— 麦克风录一段，或拖入 wav / mp3 / ogg / m4a / flac 等文件（单个 ≤ 50MB）。
 2. **选择目标音色** —— 模型库里下载基础模型，再导入或下载一个音色模型。
 3. **调参** —— 先用默认值跑一次，不满意再动「变调」。
 4. **转换与导出** —— 在线试听，下载 WAV 或多个结果打包 ZIP。
@@ -228,7 +229,7 @@ rvc-sound-clone/
 
 ## English
 
-**RVC Sound Clone** is a fully static, zero-build web app for RVC-based voice conversion. Record up to a minute of audio or drop in a file, pick a timbre, and convert — inference, pitch shifting and export all run in the browser with ONNX Runtime Web; nothing is uploaded. For best quality or speed you can instead point it at the official RVC WebUI on your own machine via a tiny CORS bridge.
+**RVC Sound Clone** is a fully static, zero-build web app for RVC-based voice conversion. Record up to a minute of audio or drop in a file, pick a timbre, and convert — inference, pitch shifting and export all run in the browser with ONNX Runtime Web; nothing is uploaded. Dark glass panels sit over a hand-written WebGL RGB sine-wave background, and the four views load on demand per route. For best quality or speed you can instead point it at the official RVC WebUI on your own machine via a tiny CORS bridge.
 
 ```bash
 git clone https://github.com/ForJiang/rvc-sound-clone.git
