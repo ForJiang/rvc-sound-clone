@@ -1,11 +1,11 @@
 # RVC Sound Clone
 
-> 借助 RVC（Retrieval-based Voice Conversion）实现的**网页端声音克隆 / 变声工具** —— 录音（最长 1 分钟）或上传音频，浏览器内完成推理、变调与导出，音频不上传。深色玻璃面板 + 自研 WebGL RGB 正弦波流动背景，四个视图按路由按需加载；纯静态部署、零构建。对音质和速度有要求时，可切换本地服务引擎，连本机官方 RVC 服务走 GPU。
+> 网页端 RVC 声音克隆/变声，音频不上传
 >
-> Web RVC voice conversion / cloning: in-browser recording or batch upload, ONNX Runtime Web inference, full parameters & presets, audio never uploaded; optional local engine to official RVC WebUI for GPU; purely static, no build
+> Web-based RVC voice conversion / cloning, audio never uploaded
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-在线-3ddc97.svg)](https://forjiang.github.io/rvc-sound-clone/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-6d8cff.svg)](LICENSE)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-6d8cff.svg)](LICENSE)
 [![No Build](https://img.shields.io/badge/build-none-success.svg)](index.html)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-a86dff.svg)](https://github.com/ForJiang/rvc-sound-clone/pulls)
 
@@ -225,7 +225,7 @@ rvc-sound-clone/
 
 ## 许可证
 
-代码以 [MIT](LICENSE) 发布。集成的上游项目（RVC WebUI、ONNX Runtime Web、基础模型）遵循各自许可，使用前请自行确认。
+代码以 [GPL-3.0](LICENSE) 发布 © 2026 ForJiang。集成的上游项目（RVC WebUI、ONNX Runtime Web、基础模型）遵循各自许可，使用前请自行确认。
 
 ---
 
@@ -244,3 +244,5 @@ python3 -m http.server 8080   # http://127.0.0.1:8080
 - **Privacy**: audio and models never leave your device / never reach a third party
 
 Only clone your own voice or a voice you are authorized to use. The authors take no responsibility for misuse.
+
+Released under the [GPL-3.0](LICENSE) © 2026 ForJiang.
